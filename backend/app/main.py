@@ -1,10 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from contextlib import asynccontextmanager
 import time
 import sys
 import os
+from typing import List
 
 # Dynamic import routing: Resolve workspace root and inject to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
@@ -12,12 +13,19 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".
 from app.core.config import settings
 from app.models.schemas import HealthCheck, ChatRequest, ChatResponse, ToolExecutionLog, StandardApiResponse
 from app.core.mcp_client import mcp_client_manager
+from app.database.connection import db_manager
 from agent_layer.agent import agent_orchestrator
 
-# Define lifespan event handler to manage MCP subprocess lifecycles
+# Define lifespan event handler to manage database initialization & MCP subprocess lifecycles
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # STARTUP: Connect to the Network Analysis MCP Server
+    # STARTUP: Initialize database and connect to MCP Server
+    try:
+        print("[Lifespan] Initializing local SQLite database...")
+        db_manager.init_db()
+    except Exception as db_err:
+        print(f"[Lifespan] CRITICAL: Failed to initialize SQLite database: {db_err}")
+
     try:
         print("[Lifespan] Starting MCP Client and spawning Network Analysis Server subprocess...")
         await mcp_client_manager.connect_to_server(settings.NETWORK_ANALYSIS_SERVER_PATH)
@@ -50,7 +58,7 @@ app.add_middleware(
 @app.get("/health", response_model=HealthCheck, tags=["System"])
 async def health_check():
     """
-    Checks the status of the server and verifies that the MCP Client is connected.
+    Checks the status of the server and verifies database and MCP connectivity.
     """
     mcp_status = "connected" if mcp_client_manager.session else "disconnected"
     return HealthCheck(
@@ -64,7 +72,7 @@ async def health_check():
 async def chat_endpoint(request: ChatRequest):
     """
     Processes the chat prompt using the AI Agent Layer.
-    The agent dynamically reasons about user intent and selects which MCP tool to run.
+    Automatically audits and persists all executed tools to the local SQLite database.
     """
     tools_executed = []
     
@@ -87,15 +95,24 @@ async def chat_endpoint(request: ChatRequest):
             try:
                 # Trigger the live tool call
                 tool_output = await mcp_client_manager.call_tool(chosen_tool, arguments)
-                duration_ms = (time.time() - start_time) * 1000
+                duration_ms = round((time.time() - start_time) * 1000, 2)
                 
-                # Record the audit log
+                # REAL LOGIC: Persist successful tool execution to SQLite Audit Log
+                db_manager.log_tool_execution(
+                    tool_name=chosen_tool,
+                    arguments=arguments,
+                    result=tool_output,
+                    execution_time_ms=duration_ms,
+                    status="success"
+                )
+                
+                # Record in response payload
                 tools_executed.append(
                     ToolExecutionLog(
                         tool_name=chosen_tool,
                         arguments=arguments,
                         result=tool_output,
-                        execution_time_ms=round(duration_ms, 2),
+                        execution_time_ms=duration_ms,
                         status="success"
                     )
                 )
@@ -107,13 +124,23 @@ async def chat_endpoint(request: ChatRequest):
                 )
                 
             except Exception as tool_error:
-                duration_ms = (time.time() - start_time) * 1000
+                duration_ms = round((time.time() - start_time) * 1000, 2)
+                
+                # REAL LOGIC: Persist failed tool execution to SQLite Audit Log
+                db_manager.log_tool_execution(
+                    tool_name=chosen_tool,
+                    arguments=arguments,
+                    result=f"Tool failed: {str(tool_error)}",
+                    execution_time_ms=duration_ms,
+                    status="failure"
+                )
+                
                 tools_executed.append(
                     ToolExecutionLog(
                         tool_name=chosen_tool,
                         arguments=arguments,
                         result=f"Tool failed: {str(tool_error)}",
-                        execution_time_ms=round(duration_ms, 2),
+                        execution_time_ms=duration_ms,
                         status="failure"
                     )
                 )
@@ -138,4 +165,20 @@ async def chat_endpoint(request: ChatRequest):
             success=False,
             data=None,
             error=f"Agent orchestration error: {str(e)}"
+        )
+
+@app.get(f"{settings.API_PREFIX}/logs", response_model=StandardApiResponse, tags=["Auditing"])
+async def get_audit_logs(limit: int = Query(default=20, ge=1, le=100)):
+    """
+    Fetches the historical tool audit logs stored in the local SQLite database.
+    Useful for our frontend console dashboard.
+    """
+    try:
+        logs = db_manager.get_tool_logs(limit=limit)
+        return StandardApiResponse(success=True, data=logs, error=None)
+    except Exception as e:
+        return StandardApiResponse(
+            success=False,
+            data=None,
+            error=f"Failed to fetch audit logs: {str(e)}"
         )
