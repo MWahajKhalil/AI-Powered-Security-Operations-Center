@@ -10,6 +10,23 @@ import time
 # Initialize FastMCP Server for Threat Intelligence
 mcp = FastMCP("Threat-Intelligence-Server")
 
+@mcp.resource("intel://blacklist")
+def get_intel_blacklist() -> str:
+    """
+    [MCP RESOURCE]: Exposes the active blacklisted threat signatures (Indicators of Compromise).
+    
+    Demonstrates the second core pillar of the Model Context Protocol (Resources),
+    allowing LLMs to read structured, read-only feeds of localized threat signatures.
+    """
+    return json.dumps({
+        "last_updated": "2026-06-01T12:00:00Z",
+        "total_signatures": 4,
+        "blacklisted_ips": ["198.51.100.42", "203.0.113.80"],
+        "blacklisted_domains": ["malicious-tracker.xyz", "suspicious-tracker.xyz"],
+        "confidence_level": "HIGH",
+        "source": "Local Threat Intel Ingress Feed"
+    }, indent=2)
+
 # Simple helper to validate IP formatting
 def is_valid_ip(ip: str) -> bool:
     ipv4_pattern = r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"

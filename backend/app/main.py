@@ -121,10 +121,17 @@ async def chat_endpoint(request: ChatRequest):
                     )
                 )
                 
-                # Synthesize final response
+                # Synthesize dynamic, executive security analyst response
+                synthesized_report = await agent_orchestrator.synthesize_response(
+                    user_message=request.message,
+                    tool_name=chosen_tool,
+                    tool_arguments=arguments,
+                    tool_output=tool_output
+                )
+                
                 agent_final_text = (
                     f"### Agent Plan\n{explanation}\n\n"
-                    f"### Tool Execution Output (`{chosen_tool}`)\n{tool_output}"
+                    f"{synthesized_report}"
                 )
                 
             except Exception as tool_error:

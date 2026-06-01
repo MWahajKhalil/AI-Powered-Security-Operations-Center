@@ -12,6 +12,43 @@ mcp = FastMCP("Log-Analysis-Server")
 
 DEFAULT_LOG_PATH = "/Users/mwahajkhalil/Learnings/MCP Project/database/auth.log"
 
+@mcp.resource("file:///Users/mwahajkhalil/Learnings/MCP Project/database/auth.log")
+def read_raw_auth_log() -> str:
+    """
+    [MCP RESOURCE]: Exposes the raw system authentication syslog file.
+    
+    In the Model Context Protocol, Resources act as read-only data nodes (similar to URLs)
+    that the LLM can query directly to inspect static or dynamic environmental states.
+    """
+    if os.path.exists(DEFAULT_LOG_PATH):
+        with open(DEFAULT_LOG_PATH, "r") as f:
+            return f.read()
+    return "Error: Raw authentication syslog database file not found."
+
+@mcp.prompt("threat-audit-playbook")
+def threat_audit_playbook(username: str = "Analyst_Mwahaj") -> str:
+    """
+    [MCP PROMPT]: Generates a structured corporate incident playbook template to guide the LLM.
+    
+    In the Model Context Protocol, Prompts act as standard template triggers that guide
+    the LLM's reasoning and tool orchestrations for specific domain tasks.
+    """
+    return f"""
+You are an elite, production-grade Tier-2 SOC Incident Investigator working alongside {username}.
+An active security threat alert has been flagged in our infrastructure.
+
+Please execute the following incident response runbook step-by-step:
+1. Parse our dynamic syslog logs using 'analyze_authentication_logs' to build a relational model.
+2. Assess anomalous actions by running our diagnostics tools:
+   - Call 'detect_brute_force' (identifies SSH login password flooding).
+   - Call 'detect_impossible_travel' (physics-defying concurrent session locations).
+   - Call 'detect_off_hours_logins' (unauthorized off-hours administrative access).
+3. If malicious source IPs are discovered, run deep diagnostic IP reputation checks and GeoIP scans.
+4. Compile a concise, executive Summary of Findings detailing the incident timeline, anomalous vectors, and specific mitigation guidelines (blocking rules, MFA resets).
+
+Execute this threat audit playbook immediately and present your final report.
+"""
+
 def get_log_path(override_path: str = None) -> str:
     """Resolves log file path, falling back to absolute default workspace path."""
     if override_path and len(override_path.strip()) > 0:
