@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import StatusCard from "@/components/StatusCard";
@@ -8,9 +8,51 @@ import RecentLogs from "@/components/RecentLogs";
 import ThreatChart from "@/components/ThreatChart";
 import AuditTerminal from "@/components/AuditTerminal";
 import ThreatIntelChat from "@/components/ThreatIntelChat";
+import BulletinsBoard from "@/components/BulletinsBoard";
+import ThreatMap from "@/components/ThreatMap";
+import AgentPipeline from "@/components/AgentPipeline";
+import SslInspector from "@/components/SslInspector";
+import ReportGenerator from "@/components/ReportGenerator";
+
+interface ThreatAdvisory {
+  title: string;
+  link: string;
+  published: string;
+  summary: string;
+}
 
 export default function Home() {
   const [activeView, setActiveView] = useState<"dashboard" | "chat">("dashboard");
+  const [threats, setThreats] = useState<ThreatAdvisory[]>([]);
+  const [loadingThreats, setLoadingThreats] = useState<boolean>(true);
+  const [chatQuery, setChatQuery] = useState("");
+  const [dashTab, setDashTab] = useState<"radar" | "audits" | "sandbox">("radar");
+
+  const handleInvestigateBulletin = (query: string) => {
+    setChatQuery(query);
+    setActiveView("chat");
+  };
+
+  // Fetch live CISA Advisories on mount for homepage ticker
+  const fetchThreats = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/threat-feed");
+      if (response.ok) {
+        const payload = await response.json();
+        if (payload.success && payload.data && Array.isArray(payload.data.advisories)) {
+          setThreats(payload.data.advisories);
+        }
+      }
+    } catch (err) {
+      console.warn("FastAPI offline or threat-feed endpoint unavailable.");
+    } finally {
+      setLoadingThreats(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchThreats();
+  }, []);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-obsidian)] text-[var(--text-primary)] relative transition-colors duration-300">
@@ -27,14 +69,59 @@ export default function Home() {
           {/* Dashboard View */}
           {activeView === "dashboard" && (
             <div className="flex flex-col gap-6 fade-in">
-              {/* Glass Header Info Card */}
-              <div className="glass-card p-6 border-l-4 border-l-[#0EA5E9] bg-slate-500/5">
-                <h2 className="text-sm font-extrabold tracking-wider text-[var(--text-primary)] transition-colors duration-300">
-                  SOC COMMAND OVERVIEW DECK
-                </h2>
-                <p className="text-[11px] text-[var(--text-muted)] mt-1.5 leading-relaxed max-w-2xl transition-colors duration-300">
-                  Unified control deck of the security network client. The Model Context Protocol layers are listening on background stdio channels. Switch to **Threat Hunt** to test real-time AI investigations.
-                </p>
+              {/* Glass Header Info Card with Live CISA Ticker */}
+              <div className="glass-card p-6 border-l-4 border-l-[#0EA5E9] bg-slate-500/5 relative overflow-hidden">
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 z-10 relative">
+                  <div>
+                    <h2 className="text-sm font-extrabold tracking-wider text-[var(--text-primary)] transition-colors duration-300">
+                      SOC COMMAND OVERVIEW DECK
+                    </h2>
+                    <p className="text-[11px] text-[var(--text-muted)] mt-1.5 leading-relaxed max-w-2xl transition-colors duration-300">
+                      Unified control deck of the security network client. The Model Context Protocol layers are listening on background stdio channels. Switch to **Threat Hunt** to test real-time AI investigations.
+                    </p>
+                  </div>
+                  
+                  {/* Premium Live Warning Indicator */}
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--color-crimson)]/20 bg-[var(--color-crimson)]/5 text-[var(--color-crimson)] text-[9px] font-bold uppercase tracking-wider self-start md:self-auto transition-all duration-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-crimson)] shadow-[0_0_8px_var(--color-crimson)] animate-ping" />
+                    <span>CISA Live Feed</span>
+                  </div>
+                </div>
+
+                {/* Horizontal Live Advisories Ticker */}
+                <div className="mt-5 border-t border-[var(--border-muted)] pt-4 z-10 relative flex flex-col sm:flex-row gap-3 items-start sm:items-center text-[10px]">
+                  <span className="text-[9px] text-[var(--color-cyan)] font-extrabold uppercase tracking-widest bg-[var(--color-cyan)]/5 border border-[var(--color-cyan)]/25 px-2 py-0.5 rounded flex-shrink-0 transition-all duration-300">
+                    Active Bulletins:
+                  </span>
+                  
+                  <div className="flex-1 w-full overflow-hidden relative h-5 flex items-center">
+                    {loadingThreats ? (
+                      <span className="text-[var(--text-muted)]/60 animate-pulse font-mono text-[9px] uppercase tracking-wider">
+                        Synchronizing global security ingest advisories...
+                      </span>
+                    ) : threats.length === 0 ? (
+                      <span className="text-[var(--text-muted)] font-mono text-[9px]">
+                        Feed offline. Launch uvicorn daemon to stream real-time cybersecurity campaign warnings.
+                      </span>
+                    ) : (
+                      <div className="absolute w-full whitespace-nowrap animate-marquee flex items-center gap-8 text-[10px]">
+                        {threats.map((t, idx) => (
+                          <a 
+                            key={idx}
+                            href={t.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[var(--text-secondary)] hover:text-[var(--color-cyan)] transition-colors inline-flex items-center gap-1.5 group"
+                          >
+                            <span className="text-[var(--color-crimson)] font-extrabold">🚨 [ALERT]</span>
+                            <span className="font-bold underline decoration-dotted decoration-[var(--border-muted)] group-hover:decoration-[var(--color-cyan)]">{t.title}</span>
+                            <span className="text-[9px] text-[var(--text-muted)] font-mono">({t.published.split(" ")[1]} {t.published.split(" ")[2]})</span>
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Grid of Glowing Status Cards */}
@@ -74,11 +161,68 @@ export default function Home() {
                 />
               </div>
 
-              {/* Data Visualization Pane: Spline Chart & SQLite Logs Feed */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ThreatChart />
-                <RecentLogs />
+              {/* Sleek Sub-Tab Navigation Switcher */}
+              <div className="flex border-b border-[var(--border-muted)] mt-2 gap-6 text-[10px] select-none transition-colors duration-300">
+                <button 
+                  onClick={() => setDashTab("radar")}
+                  className={`pb-3 font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all duration-200 ${
+                    dashTab === "radar" 
+                      ? "border-[#0EA5E9] text-[var(--text-primary)]" 
+                      : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                  }`}
+                >
+                  🔍 Diagnostic Radar Map
+                </button>
+                <button 
+                  onClick={() => setDashTab("audits")}
+                  className={`pb-3 font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all duration-200 ${
+                    dashTab === "audits" 
+                      ? "border-[#EC4899] text-[var(--text-primary)]" 
+                      : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                  }`}
+                >
+                  📋 Audit Transactors feed
+                </button>
+                <button 
+                  onClick={() => setDashTab("sandbox")}
+                  className={`pb-3 font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all duration-200 ${
+                    dashTab === "sandbox" 
+                      ? "border-[#6366F1] text-[var(--text-primary)]" 
+                      : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                  }`}
+                >
+                  🛡️ SecOps Sandbox Inspectors
+                </button>
               </div>
+
+              {/* Tab Content 1: Threat Ingress Map & Network Scans Spline Chart */}
+              {dashTab === "radar" && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
+                  <ThreatMap />
+                  <ThreatChart />
+                </div>
+              )}
+
+              {/* Tab Content 2: Bulletins Board & Recent Logs Table */}
+              {dashTab === "audits" && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 fade-in">
+                  <BulletinsBoard 
+                    bulletins={threats}
+                    loading={loadingThreats}
+                    onInvestigate={handleInvestigateBulletin}
+                  />
+                  <RecentLogs />
+                </div>
+              )}
+
+              {/* Tab Content 3: SSL Cryptography Inspector, APM Reasoning Pipeline, and SecOps Report Generator */}
+              {dashTab === "sandbox" && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 fade-in">
+                  <SslInspector />
+                  <AgentPipeline lastQuery={chatQuery} />
+                  <ReportGenerator threats={threats} />
+                </div>
+              )}
             </div>
           )}
 
@@ -100,7 +244,7 @@ export default function Home() {
                 
                 {/* LEFT PANE: Dynamic Threat Investigation Chat */}
                 <div className="h-full overflow-hidden">
-                  <ThreatIntelChat />
+                  <ThreatIntelChat initialQuery={chatQuery} onQueryHandled={() => setChatQuery("")} />
                 </div>
 
                 {/* RIGHT PANE: Monospace Security Terminal */}

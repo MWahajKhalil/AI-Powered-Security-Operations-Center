@@ -24,3 +24,6 @@ Jun  1 17:30:17 soc-dash sshd[1800]: pam_unix(sshd:session): session opened for 
 Jun  1 23:45:10 soc-dash sshd[2200]: Accepted password for analyst from 1.1.1.1 port 54321 ssh2
 Jun  1 23:45:12 soc-dash sshd[2200]: pam_unix(sshd:session): session opened for user analyst by (uid=0)
 Jun  1 23:58:30 soc-dash sshd[2200]: pam_unix(sshd:session): session closed for user analyst
+Jun  1 14:15:36 soc-dash sudo:  analyst : TTY=pts/0 ; PWD=/home/analyst ; USER=root ; COMMAND=/usr/bin/apt-get update
+Jun  1 14:16:02 soc-dash sudo:  analyst : TTY=pts/0 ; PWD=/home/analyst ; USER=root ; COMMAND=/bin/sh
+Jun  1 14:17:12 soc-dash sudo: pam_unix(sudo:auth): authentication failure; logname=analyst uid=1001 euid=0 tty=pts/0 ruser=analyst rhost= user=analyst

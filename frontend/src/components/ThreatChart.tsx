@@ -27,28 +27,15 @@ export default function ThreatChart() {
   // Chart limits configuration
   const maxScans = 350;
 
-  /**
-   * INTERVIEW HELPERS: Projecting Relational Coordinates onto SVG Grid
-   * 
-   * A common interview discussion is how to draw custom visualizations without heavy libraries.
-   * SVG uses standard coordinate maps starting from the top-left (X=0, Y=0).
-   * To project numeric logs volumes (0 to 350) and risk rates (0% to 100%) cleanly:
-   * 1. X Axis (getX): Maps a 0-indexed column element to horizontal pixels.
-   * 2. Y Axis (getY): Inverted calculation (height - padding - value). Subtracting 
-   *    value projects larger logs counts upwards on your browser window.
-   */
-
-  // Map 7-day logs arrays to horizontal pixels
+  // Projections onto SVG Grid
   const getX = (index: number): number => {
     return padding + (index * (width - 2 * padding)) / (data.length - 1);
   };
 
-  // Map absolute inbound scans (0-350) to vertical pixels (inverted)
   const getY = (scans: number): number => {
     return height - padding - (scans * (height - 2 * padding)) / maxScans;
   };
 
-  // Map threat percentages (0-100%) to vertical pixels (inverted)
   const getRiskY = (risk: number): number => {
     return height - padding - (risk * (height - 2 * padding)) / 100;
   };
@@ -60,40 +47,42 @@ export default function ThreatChart() {
   const colWidth = (width - 2 * padding) / (data.length - 1);
 
   return (
-    <div className="glass-card p-6 flex flex-col h-full border border-white/5 bg-[#0D1420]/45 min-h-[300px] relative select-none">
-      {/* Header controls pane */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/5 pb-4 mb-4 flex-shrink-0">
+    <div className="glass-card p-6 flex flex-col h-full min-h-[360px] relative select-none transition-all duration-300">
+      {/* Header Controls Area */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-[var(--border-muted)] pb-4 mb-4 flex-shrink-0 transition-colors duration-300">
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-white">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] transition-colors duration-300">
             Threat Metrics Timeline
           </h3>
-          <p className="text-[10px] text-[#8F9CAE] mt-0.5 uppercase tracking-widest">
+          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 uppercase tracking-widest transition-colors duration-300">
             Scan volumes & risk levels (7-Day Cycle)
           </p>
         </div>
 
         {/* Legend Interactive Buttons */}
-        <div className="flex gap-2 text-[9px] text-[#8F9CAE] font-semibold">
+        <div className="flex gap-2 text-[9px] text-[var(--text-muted)] font-semibold transition-colors duration-300">
           <button
+            type="button"
             onClick={() => setShowScans(!showScans)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded border transition-all duration-200 cursor-pointer ${
               showScans
                 ? "bg-[#0EA5E9]/10 text-[#0EA5E9] border-[#0EA5E9]/30"
-                : "bg-black/15 text-white/30 border-white/5 hover:text-white/50"
+                : "bg-[var(--bg-obsidian)]/20 text-[var(--text-muted)]/40 border-[var(--border-muted)] hover:text-[var(--text-muted)]"
             }`}
           >
-            <span className={`h-2 w-2 rounded ${showScans ? "bg-[#0EA5E9]" : "bg-white/20"}`} />
+            <span className={`h-2 w-2 rounded ${showScans ? "bg-[#0EA5E9]" : "bg-[var(--text-muted)]/30"}`} />
             <span>Network Scans</span>
           </button>
           <button
+            type="button"
             onClick={() => setShowRisk(!showRisk)}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded border transition-all duration-200 cursor-pointer ${
               showRisk
                 ? "bg-[#EC4899]/10 text-[#EC4899] border-[#EC4899]/30"
-                : "bg-black/15 text-white/30 border-white/5 hover:text-white/50"
+                : "bg-[var(--bg-obsidian)]/20 text-[var(--text-muted)]/40 border-[var(--border-muted)] hover:text-[var(--text-muted)]"
             }`}
           >
-            <span className={`h-2 w-2 rounded-full ${showRisk ? "bg-[#EC4899]" : "bg-white/20"}`} />
+            <span className={`h-2 w-2 rounded-full ${showRisk ? "bg-[#EC4899]" : "bg-[var(--text-muted)]/30"}`} />
             <span>Risk Index (%)</span>
           </button>
         </div>
@@ -109,16 +98,16 @@ export default function ThreatChart() {
           {/* Gradients declarations */}
           <defs>
             <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.85" />
-              <stop offset="100%" stopColor="#6366F1" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.75" />
+              <stop offset="100%" stopColor="#6366F1" stopOpacity="0.04" />
             </linearGradient>
             <linearGradient id="lineGlow" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="#EC4899" />
               <stop offset="50%" stopColor="#6366F1" />
               <stop offset="100%" stopColor="#0EA5E9" />
             </linearGradient>
-            <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="3" result="blur" />
+            <filter id="subtleGlow" x="-10%" y="-10%" width="120%" height="120%">
+              <feGaussianBlur stdDeviation="2.2" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
@@ -133,9 +122,10 @@ export default function ThreatChart() {
                 y1={y} 
                 x2={width - padding} 
                 y2={y} 
-                stroke="rgba(255, 255, 255, 0.03)" 
-                strokeDasharray="4 4"
+                stroke="var(--border-muted)" 
+                strokeDasharray="3 3"
                 strokeWidth={1}
+                className="transition-colors duration-300"
               />
             );
           })}
@@ -147,9 +137,10 @@ export default function ThreatChart() {
               y1={padding - 5}
               x2={getX(hoveredIndex)}
               y2={height - padding + 5}
-              stroke="rgba(14, 165, 233, 0.25)"
+              stroke="#0EA5E9"
               strokeDasharray="2 2"
-              strokeWidth={1.5}
+              strokeWidth={1.2}
+              className="opacity-25"
               pointerEvents="none"
             />
           )}
@@ -158,61 +149,60 @@ export default function ThreatChart() {
           {showScans && data.map((d, index) => {
             const x = getX(index);
             const y = getY(d.scans);
-            const barWidth = 14;
+            const barWidth = 10;
             const barHeight = height - padding - y;
             const isHovered = hoveredIndex === index;
 
             return (
               <g key={index} className="group">
-                {/* Visual glow backdrop for active values */}
                 <rect 
                   x={x - barWidth / 2} 
                   y={y} 
                   width={barWidth} 
                   height={barHeight} 
                   fill="url(#barGrad)" 
-                  rx={3}
+                  rx={2.2}
                   className="transition-all duration-200"
                   style={{
                     opacity: hoveredIndex !== null && !isHovered ? 0.35 : 1,
                   }}
                 />
-                {/* Thin top cap glowing line */}
+                {/* Clean geometric top cap line instead of heavy shadows */}
                 <line 
                   x1={x - barWidth / 2} 
                   y1={y} 
                   x2={x + barWidth / 2} 
                   y2={y} 
                   stroke="#0EA5E9" 
-                  strokeWidth={2}
+                  strokeWidth={1.8}
                   className="transition-opacity duration-200"
                   style={{
-                    opacity: isHovered ? 1 : 0.6,
+                    opacity: isHovered ? 1 : 0.65,
                   }}
                 />
               </g>
             );
           })}
 
-          {/* Glowing spline curve (Threat Risk Line) */}
+          {/* Clean spline curve (Threat Risk Line) */}
           {showRisk && (
             <>
               <path 
                 d={riskPath} 
                 stroke="url(#lineGlow)" 
-                strokeWidth={3} 
+                strokeWidth={2.2} 
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                filter="url(#glowEffect)"
-                className="transition-opacity duration-200"
+                filter="url(#subtleGlow)"
+                className="opacity-80 transition-all duration-200"
                 style={{
-                  opacity: hoveredIndex !== null ? 0.4 : 0.9,
+                  opacity: hoveredIndex !== null ? 0.45 : 0.8,
                 }}
               />
               <path 
                 d={riskPath} 
                 stroke="url(#lineGlow)" 
-                strokeWidth={2.5} 
+                strokeWidth={1.8} 
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 className="opacity-100"
@@ -231,11 +221,10 @@ export default function ThreatChart() {
                 key={index}
                 cx={x}
                 cy={y}
-                r={isHovered ? 5.5 : 4}
+                r={isHovered ? 5.2 : 3.8}
                 fill="#EC4899"
-                stroke="#FFFFFF"
+                stroke="var(--bg-panel)"
                 strokeWidth={isHovered ? 2 : 1.5}
-                filter={isHovered ? "url(#glowEffect)" : ""}
                 className="transition-all duration-200"
                 style={{
                   opacity: hoveredIndex !== null && !isHovered ? 0.35 : 1,
@@ -253,7 +242,7 @@ export default function ThreatChart() {
                 key={index} 
                 x={x} 
                 y={height - 8} 
-                fill={isHovered ? "#F8FAFC" : "#8F9CAE"} 
+                fill={isHovered ? "var(--text-primary)" : "var(--text-muted)"} 
                 fontSize={9} 
                 fontFamily="var(--font-inter)"
                 fontWeight="bold"
@@ -287,44 +276,45 @@ export default function ThreatChart() {
           })}
         </svg>
 
-        {/* Floating coordinates Tooltip absolute positioned relative to container */}
+        {/* Floating Tooltip positioned relative to container */}
         {hoveredIndex !== null && (
           <div 
-            className="absolute bg-[#0C0E14]/95 backdrop-blur-md border border-white/10 rounded-lg p-2.5 shadow-2xl text-[10px] text-slate-300 pointer-events-none z-30 transition-all duration-100 ease-out flex flex-col gap-1 min-w-[120px]"
+            className="absolute bg-[var(--bg-panel)] backdrop-blur-md border border-[var(--border-muted)] rounded-lg p-2.5 shadow-2xl text-[10px] text-[var(--text-muted)] pointer-events-none z-30 transition-all duration-100 ease-out flex flex-col gap-1 min-w-[125px]"
             style={{
               left: `${(getX(hoveredIndex) / width) * 100}%`,
               top: "40%",
               transform: "translate(-50%, -100%)",
             }}
           >
-            <div className="font-extrabold text-white text-[9px] uppercase tracking-wider border-b border-white/5 pb-1 flex justify-between items-center gap-2">
+            <div className="font-bold text-[var(--text-primary)] text-[9px] uppercase tracking-wider border-b border-[var(--border-muted)] pb-1 flex justify-between items-center gap-2 transition-colors duration-300">
               <span>{data[hoveredIndex].day} System Metrics</span>
               <span className="h-1.5 w-1.5 rounded-full bg-[#0EA5E9] animate-pulse" />
             </div>
             
             {showScans && (
-              <div className="flex items-center justify-between gap-4 mt-0.5">
-                <span className="text-[#8F9CAE]">Inbound Scans:</span>
-                <span className="font-mono font-bold text-[#0EA5E9]">{data[hoveredIndex].scans}</span>
+              <div className="flex items-center justify-between gap-4 mt-0.5 font-mono text-[9px]">
+                <span className="text-[var(--text-muted)]/75">Inbound Scans:</span>
+                <span className="font-bold text-[#0EA5E9]">{data[hoveredIndex].scans}</span>
               </div>
             )}
             
-            <div className="flex items-center justify-between gap-4">
-              <span className="text-[#8F9CAE]">Blocked Hits:</span>
-              <span className="font-mono font-bold text-[#F59E0B]">{data[hoveredIndex].blocked}</span>
+            <div className="flex items-center justify-between gap-4 font-mono text-[9px]">
+              <span className="text-[var(--text-muted)]/75">Blocked Hits:</span>
+              <span className="font-bold text-[var(--color-amber)]">{data[hoveredIndex].blocked}</span>
             </div>
 
             {showRisk && (
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-[#8F9CAE]">Threat Index:</span>
-                <span className="font-mono font-bold text-[#EC4899]">{data[hoveredIndex].risk}%</span>
+              <div className="flex items-center justify-between gap-4 font-mono text-[9px]">
+                <span className="text-[var(--text-muted)]/75">Threat Index:</span>
+                <span className="font-bold text-[#EC4899]">{data[hoveredIndex].risk}%</span>
               </div>
             )}
           </div>
         )}
       </div>
 
-      <div className="border-t border-white/5 pt-3.5 mt-4 text-[9px] text-[#8F9CAE] flex justify-between items-center flex-shrink-0">
+      {/* Sensor footer */}
+      <div className="border-t border-[var(--border-muted)] pt-3.5 mt-4 text-[9px] text-[var(--text-muted)] flex justify-between items-center transition-colors duration-300 flex-shrink-0">
         <span>SENSOR STATUS: NORMAL SCAN RATES</span>
         <span>RADAR OVERVIEW STABLE</span>
       </div>

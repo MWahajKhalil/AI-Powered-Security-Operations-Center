@@ -17,6 +17,9 @@ export default function RecentLogs() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "success" | "failure">("all");
+  
+  // Track which log row is currently expanded (Datadog accordions)
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const fetchLogs = async () => {
     try {
@@ -43,10 +46,7 @@ export default function RecentLogs() {
   };
 
   useEffect(() => {
-    // Initial fetch
     fetchLogs();
-
-    // Poll every 3.5 seconds for live logs feed
     const interval = setInterval(fetchLogs, 3500);
     return () => clearInterval(interval);
   }, []);
@@ -59,9 +59,14 @@ export default function RecentLogs() {
     return matchesSearch && matchesStatus;
   });
 
+  const toggleExpand = (idx: number) => {
+    setExpandedIndex(expandedIndex === idx ? null : idx);
+  };
+
   return (
-    <div className="glass-card p-6 flex flex-col h-full min-h-[300px] transition-all duration-300 select-none">
-      <div className="flex justify-between items-center border-b border-[var(--border-muted)] pb-4 mb-4 transition-colors duration-300">
+    <div className="glass-card p-6 flex flex-col h-full min-h-[360px] transition-all duration-300 select-none overflow-hidden">
+      {/* Header Info Block */}
+      <div className="flex justify-between items-center border-b border-[var(--border-muted)] pb-4 mb-4 transition-colors duration-300 flex-shrink-0">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] transition-colors duration-300">
             Sensor Audit Logs Stream
@@ -70,7 +75,7 @@ export default function RecentLogs() {
             Real-time SQLite transaction feed
           </p>
         </div>
-        <div className="flex items-center gap-1.5 text-[9px] text-[#0EA5E9] bg-[#0EA5E9]/5 border border-[#0EA5E9]/15 px-2.5 py-1 rounded-full font-semibold">
+        <div className="flex items-center gap-1.5 text-[9px] text-[#0EA5E9] bg-[#0EA5E9]/5 border border-[#0EA5E9]/15 px-2.5 py-1 rounded-full font-semibold transition-colors duration-300">
           <span className="h-1 w-1 rounded-full bg-[#0EA5E9] shadow-[0_0_6px_#0EA5E9] animate-ping" />
           <span>Live Listening</span>
         </div>
@@ -83,10 +88,11 @@ export default function RecentLogs() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Filter logs (e.g. ping, 8.8.8.8)..."
-          className="flex-1 bg-[var(--bg-obsidian)]/30 border border-[var(--border-muted)] rounded-lg px-3 py-1.5 text-[10px] placeholder:text-[var(--text-muted)]/40 text-[var(--text-primary)] outline-none focus:border-[#0EA5E9]/40 transition-all duration-300"
+          className="flex-1 bg-[var(--bg-obsidian)]/30 border border-[var(--border-muted)] rounded-lg px-3 py-1.5 text-[10px] placeholder:text-[var(--text-muted)]/40 text-[var(--text-primary)] outline-none focus:border-[#0EA5E9]/45 transition-all duration-300"
         />
         <div className="flex items-center gap-1.5">
           <button
+            type="button"
             onClick={() => setStatusFilter("all")}
             className={`px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
               statusFilter === "all"
@@ -97,6 +103,7 @@ export default function RecentLogs() {
             All ({logs.length})
           </button>
           <button
+            type="button"
             onClick={() => setStatusFilter("success")}
             className={`px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1 ${
               statusFilter === "success"
@@ -108,6 +115,7 @@ export default function RecentLogs() {
             Ok ({logs.filter(l => l.status === "success").length})
           </button>
           <button
+            type="button"
             onClick={() => setStatusFilter("failure")}
             className={`px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1 ${
               statusFilter === "failure"
@@ -121,83 +129,162 @@ export default function RecentLogs() {
         </div>
       </div>
 
-      {/* Main Logs Stream Container */}
-      <div className="flex-1 overflow-y-auto space-y-3 max-h-[280px] pr-1 scroll-smooth">
+      {/* Main Table Stream Layout */}
+      <div className="flex-1 overflow-x-auto overflow-y-auto max-h-[320px] border border-[var(--border-muted)] rounded-lg bg-[var(--bg-obsidian)]/10 transition-colors duration-300">
         {loading ? (
-          <div className="h-full flex flex-col items-center justify-center text-xs text-[var(--text-muted)] py-12 gap-3 transition-colors duration-300">
+          <div className="flex flex-col items-center justify-center text-xs text-[var(--text-muted)] py-20 gap-3">
             <div className="wave-container">
               <div className="wave-bar" />
               <div className="wave-bar" />
               <div className="wave-bar" />
               <div className="wave-bar" />
             </div>
-            <span>Reading Audit Databases...</span>
+            <span className="font-mono text-[9px] uppercase tracking-wider">Syncing relational databases...</span>
           </div>
         ) : error ? (
-          <div className="h-full flex flex-col items-center justify-center text-xs text-[var(--text-muted)] py-12 text-center transition-colors duration-300">
-            <span className="h-2 w-2 rounded-full bg-[#EF4444] shadow-[0_0_8px_#EF4444] mb-2" />
-            <span className="font-semibold text-[var(--text-primary)] transition-colors duration-300">{error}</span>
-            <p className="text-[9px] text-[var(--text-muted)]/60 mt-1 max-w-[200px] transition-colors duration-300">
-              FastAPI backend is offline. Run uvicorn server on port 8000 to stream live scans.
+          <div className="flex flex-col items-center justify-center text-xs text-[var(--text-muted)] py-20 text-center">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#EF4444] shadow-[0_0_8px_#EF4444] mb-2 animate-pulse" />
+            <span className="font-bold text-[var(--text-primary)] transition-colors duration-300">{error}</span>
+            <p className="text-[9px] text-[var(--text-muted)]/60 mt-1 max-w-[200px] leading-relaxed transition-colors duration-300">
+              FastAPI backend is offline. Run uvicorn server on port 8000 to stream live audits.
             </p>
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-xs text-[var(--text-muted)] py-12 text-center transition-colors duration-300">
-            <svg className="h-8 w-8 text-[var(--text-muted)]/20 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span className="font-medium text-[var(--text-primary)] transition-colors duration-300">No matching logs found</span>
-            <p className="text-[9px] text-[var(--text-muted)]/60 mt-1 max-w-[220px] transition-colors duration-300">
-              Adjust your search text or status severity filters.
+          <div className="flex flex-col items-center justify-center text-xs text-[var(--text-muted)] py-20 text-center">
+            <span className="text-lg mb-2">🔍</span>
+            <span className="font-bold text-[var(--text-primary)] transition-colors duration-300">No matching audit logs found</span>
+            <p className="text-[9px] text-[var(--text-muted)]/60 mt-1 transition-colors duration-300">
+              Refine your text parameters or status filters.
             </p>
           </div>
         ) : (
-          filteredLogs.map((log, index) => {
-            const date = new Date(log.timestamp);
-            const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const isSuccess = log.status === "success";
+          <table className="w-full text-left border-collapse font-mono text-[10px]">
+            {/* Table Header */}
+            <thead>
+              <tr className="border-b border-[var(--border-muted)] bg-[var(--bg-panel)]/50 text-[var(--text-muted)] uppercase tracking-wider font-extrabold text-[8px] transition-colors duration-300 select-none">
+                <th className="py-2.5 px-4 w-[8%] text-center">STATUS</th>
+                <th className="py-2.5 px-4 w-[42%]">DIAGNOSTIC VECTOR (TOOL)</th>
+                <th className="py-2.5 px-4 w-[15%] text-right">LATENCY</th>
+                <th className="py-2.5 px-4 w-[20%] text-right">TIMESTAMP</th>
+                <th className="py-2.5 px-4 w-[15%] text-center">ACTIONS</th>
+              </tr>
+            </thead>
+            {/* Table Body */}
+            <tbody>
+              {filteredLogs.map((log, index) => {
+                const date = new Date(log.timestamp);
+                const timeStr = date.toLocaleTimeString([], { hour12: false });
+                const isSuccess = log.status === "success";
+                const isExpanded = expandedIndex === index;
 
-            return (
-              <div 
-                key={index}
-                className="flex flex-col gap-2 p-3 bg-[var(--bg-obsidian)]/10 rounded-lg border border-[var(--border-muted)] hover:border-[var(--text-muted)]/20 transition-all duration-200 fade-in"
-              >
-                {/* Header Row */}
-                <div className="flex justify-between items-center text-[10px]">
-                  <div className="flex items-center gap-2">
-                    <span 
-                      className={`h-1.5 w-1.5 rounded-full`}
-                      style={{ 
-                        backgroundColor: isSuccess ? "var(--color-emerald)" : "var(--color-crimson)",
-                        boxShadow: `0 0 6px ${isSuccess ? "var(--color-emerald)" : "var(--color-crimson)"}`
-                      }}
-                    />
-                    <span className="font-mono font-bold text-[var(--text-primary)] transition-colors duration-300">{log.tool_name}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-[var(--text-muted)] font-mono text-[9px] transition-colors duration-300">
-                    <span>{log.execution_time_ms} ms</span>
-                    <span>{timeStr}</span>
-                  </div>
-                </div>
+                return (
+                  <React.Fragment key={index}>
+                    {/* Collapsible Click Row */}
+                    <tr 
+                      onClick={() => toggleExpand(index)}
+                      className={`border-b border-[var(--border-muted)] hover:bg-[var(--text-primary)]/3 cursor-pointer transition-all duration-200 select-none ${
+                        isExpanded ? "bg-[var(--border-muted)]/15" : ""
+                      }`}
+                    >
+                      {/* 1. Status Indicator Pillar */}
+                      <td className="py-3 px-4 text-center">
+                        <span 
+                          className="inline-block h-2 w-2 rounded-full"
+                          style={{ 
+                            backgroundColor: isSuccess ? "var(--color-emerald)" : "var(--color-crimson)",
+                            boxShadow: `0 0 6px ${isSuccess ? "var(--color-emerald)" : "var(--color-crimson)"}`
+                          }}
+                        />
+                      </td>
 
-                {/* Parameters and Result Block */}
-                <div className="bg-[var(--bg-obsidian)]/30 border border-[var(--border-muted)] rounded p-2 font-mono text-[9px] text-[var(--text-primary)]/80 leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-24 transition-all duration-300">
-                  <div>
-                    <span className="text-[#0EA5E9]">Args:</span> {JSON.stringify(log.arguments)}
-                  </div>
-                  <div className="mt-1">
-                    <span className={isSuccess ? "text-[#10B981]" : "text-[#EF4444]"}>
-                      {isSuccess ? "Result:" : "Error:"}
-                    </span>{" "}
-                    {typeof log.result === "string" ? log.result.trim() : JSON.stringify(log.result)}
-                  </div>
-                </div>
-              </div>
-            );
-          })
+                      {/* 2. Tool Name Column */}
+                      <td className="py-3 px-4 font-bold text-[var(--text-primary)] transition-colors duration-300">
+                        {log.tool_name}
+                      </td>
+
+                      {/* 3. Latency benchmarks */}
+                      <td className="py-3 px-4 text-right text-[var(--text-secondary)] font-semibold transition-colors duration-300">
+                        {log.execution_time_ms} ms
+                      </td>
+
+                      {/* 4. Timestamp */}
+                      <td className="py-3 px-4 text-right text-[var(--text-muted)] transition-colors duration-300">
+                        {timeStr}
+                      </td>
+
+                      {/* 5. Actions / Expand icon */}
+                      <td className="py-3 px-4 text-center">
+                        <span className={`text-[10px] text-[#0EA5E9] font-bold uppercase transition-all duration-200 ${isExpanded ? "rotate-90" : ""}`}>
+                          {isExpanded ? "▼" : "▶"}
+                        </span>
+                      </td>
+                    </tr>
+
+                    {/* Accordion expand block */}
+                    {isExpanded && (
+                      <tr className="bg-[var(--bg-obsidian)]/20 transition-all duration-300">
+                        <td colSpan={5} className="py-4 px-6 border-b border-[var(--border-muted)]">
+                          <div className="flex flex-col gap-3.5 fade-in">
+                            {/* Input Parameters Tag Section */}
+                            <div className="flex flex-col gap-1.5">
+                              <span className="text-[8px] uppercase tracking-wider text-[var(--text-muted)] font-extrabold transition-colors duration-300">
+                                Inbound Input Parameters:
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {Object.entries(log.arguments).length === 0 ? (
+                                  <span className="px-2 py-0.5 rounded border border-[var(--border-muted)] text-[8px] text-[var(--text-muted)] bg-[var(--bg-obsidian)]/40 transition-colors duration-300">
+                                    None (Void params)
+                                  </span>
+                                ) : (
+                                  Object.entries(log.arguments).map(([key, val]) => (
+                                    <span 
+                                      key={key} 
+                                      className="px-2 py-0.5 rounded border border-[#0EA5E9]/15 text-[8px] text-[#0EA5E9] bg-[#0EA5E9]/5 font-semibold transition-colors duration-300"
+                                    >
+                                      {key}: <span className="text-[var(--text-secondary)] font-normal">{String(val)}</span>
+                                    </span>
+                                  ))
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Raw Structured Output Block */}
+                            <div className="flex flex-col gap-1.5 relative group">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[8px] uppercase tracking-wider text-[var(--text-muted)] font-extrabold transition-colors duration-300">
+                                  Outbound subprocess trace (stdout):
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => navigator.clipboard.writeText(
+                                    typeof log.result === "string" ? log.result : JSON.stringify(log.result, null, 2)
+                                  )}
+                                  className="px-2 py-0.5 rounded border border-[var(--border-muted)] text-[8px] uppercase font-bold text-[var(--text-muted)] hover:text-[#0EA5E9] hover:border-[#0EA5E9]/30 bg-[var(--bg-obsidian)]/60 cursor-pointer transition-all"
+                                >
+                                  Copy JSON
+                                </button>
+                              </div>
+                              
+                              <pre className="bg-[var(--bg-terminal)]/95 border border-[var(--border-muted)] rounded-lg p-3 text-[9px] text-[var(--text-secondary)] max-h-36 overflow-y-auto leading-relaxed overflow-x-auto whitespace-pre-wrap transition-all duration-300">
+                                {typeof log.result === "string" 
+                                  ? log.result.trim() 
+                                  : JSON.stringify(log.result, null, 2)
+                                }
+                              </pre>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         )}
       </div>
 
+      {/* Database sync footer */}
       <div className="border-t border-[var(--border-muted)] pt-3.5 mt-4 text-[9px] text-[var(--text-muted)] flex justify-between items-center transition-colors duration-300 flex-shrink-0">
         <span>SQLITE AUDITING: soc_dashboard.db</span>
         <span>STREAM FEED STABLE</span>

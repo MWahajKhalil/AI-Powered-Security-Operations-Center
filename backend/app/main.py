@@ -1,3 +1,4 @@
+# Hot reload triggered for newly registered Phase 16 MCP advanced security tools
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
@@ -192,4 +193,21 @@ async def get_audit_logs(limit: int = Query(default=20, ge=1, le=100)):
             success=False,
             data=None,
             error=f"Failed to fetch audit logs: {str(e)}"
+        )
+
+@app.get(f"{settings.API_PREFIX}/threat-feed", response_model=StandardApiResponse, tags=["Auditing"])
+async def get_live_threat_feed():
+    """
+    Directly triggers the threat_feed_ticker MCP tool to fetch live CISA security alerts
+    without LLM latency. Used for the real-time homepage ticker.
+    """
+    import json
+    try:
+        result = await mcp_client_manager.call_tool("threat_feed_ticker", {})
+        return StandardApiResponse(success=True, data=json.loads(result), error=None)
+    except Exception as e:
+        return StandardApiResponse(
+            success=False,
+            data=None,
+            error=f"Failed to load live threat feed: {str(e)}"
         )

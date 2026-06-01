@@ -194,6 +194,11 @@ def check_ssl_expiry(domain: str) -> str:
                     for sub_item in item:
                         issuer_dict[sub_item[0]] = sub_item[1]
                 
+                subject_dict = {}
+                for item in cert.get("subject", []):
+                    for sub_item in item:
+                        subject_dict[sub_item[0]] = sub_item[1]
+                
                 result = {
                     "success": True,
                     "domain": cleaned_domain,
@@ -201,7 +206,7 @@ def check_ssl_expiry(domain: str) -> str:
                     "days_remaining": days_remaining,
                     "is_expired": days_remaining < 0,
                     "issuer": issuer_dict.get("organizationName") or issuer_dict.get("commonName") or "Unknown Issuer",
-                    "subject": dict(cert.get("subject", [])),
+                    "subject": subject_dict,
                     "version": cert.get("version", "Unknown"),
                     "serialNumber": cert.get("serialNumber") or "Unknown"
                 }
