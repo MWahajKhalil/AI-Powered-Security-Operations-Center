@@ -31,6 +31,8 @@ async def lifespan(app: FastAPI):
         await mcp_client_manager.connect_to_server(settings.NETWORK_ANALYSIS_SERVER_PATH)
         print("[Lifespan] Spawning Threat Intelligence Server subprocess...")
         await mcp_client_manager.connect_to_server(settings.THREAT_INTEL_SERVER_PATH)
+        print("[Lifespan] Spawning Log Analysis Server subprocess...")
+        await mcp_client_manager.connect_to_server(settings.LOG_ANALYSIS_SERVER_PATH)
         tools = await mcp_client_manager.list_available_tools()
         print(f"[Lifespan] Discovered MCP Tools: {[t['name'] for t in tools]}")
     except Exception as e:

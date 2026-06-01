@@ -169,10 +169,46 @@ class SecurityAgentOrchestrator:
                     f"[Local Router] I analyzed the request and detected domain reputation check. Selected analyze_domain_reputation tool for domain '{target}'."
                 )
 
+        # 5. Log Analysis Router
+        if "parse log" in msg or "analyze log" in msg or "auth log" in msg or "read log" in msg or "authentication log" in msg:
+            if "analyze_authentication_logs" in tool_names:
+                return (
+                    "analyze_authentication_logs",
+                    {},
+                    "[Local Router] I analyzed the request and detected log parsing keyword. Selected analyze_authentication_logs tool."
+                )
+
+        # 6. Brute Force Router
+        if "brute force" in msg or "brute-force" in msg or "failed attempt" in msg or "login attack" in msg or "multiple failure" in msg:
+            if "detect_brute_force" in tool_names:
+                return (
+                    "detect_brute_force",
+                    {},
+                    "[Local Router] I analyzed the request and detected brute force query. Selected detect_brute_force tool."
+                )
+
+        # 7. Impossible Travel Router
+        if "impossible travel" in msg or "travel anomaly" in msg or "multi-country login" in msg or "location anomaly" in msg:
+            if "detect_impossible_travel" in tool_names:
+                return (
+                    "detect_impossible_travel",
+                    {},
+                    "[Local Router] I analyzed the request and detected impossible travel query. Selected detect_impossible_travel tool."
+                )
+
+        # 8. Off-Hours Login Router
+        if "off hour" in msg or "off-hours" in msg or "late night login" in msg or "suspicious hour" in msg:
+            if "detect_off_hours_logins" in tool_names:
+                return (
+                    "detect_off_hours_logins",
+                    {},
+                    "[Local Router] I analyzed the request and detected off-hours login query. Selected detect_off_hours_logins tool."
+                )
+
         # No matching tool found
         explanation = (
             "I parsed your request, but I could not find a suitable security tool to execute.\n"
-            "Try asking me to 'Ping 8.8.8.8', 'Run a DNS lookup on google.com', 'Find location for 8.8.8.8', or check the reputation of '198.51.100.42' or 'malicious-tracker.xyz'!"
+            "Try asking me to 'Ping 8.8.8.8', 'Find location for 8.8.8.8', 'Parse auth logs', 'Scan for brute-force attacks', or 'Check for impossible travel anomalies'!"
         )
         if not self.api_key:
             explanation += "\n\n*(Tip: Set a GEMINI_API_KEY in a .env file to enable dynamic AI reasoning!)*"
