@@ -6,6 +6,8 @@ import os
 import urllib.request
 import urllib.error
 import time
+import xml.etree.ElementTree as ET
+
 
 # Initialize FastMCP Server for Threat Intelligence
 mcp = FastMCP("Threat-Intelligence-Server")
@@ -311,6 +313,199 @@ def geoip_lookup(ip: str) -> str:
     result["query_ip"] = ip
     result["integration_note"] = "Simulation Mode: Active GeoIP offline fallback triggered."
     return json.dumps(result, indent=2)
+
+@mcp.tool()
+def analyze_url_safety(url: str) -> str:
+    """
+    Inspects a full URL endpoint to detect phishing strings, raw IPs, insecure HTTP protocol, and malicious patterns.
+    
+    Args:
+        url: The full URL (e.g., 'http://secure-login-bank.xyz/update') to inspect.
+    """
+    cleaned_url = url.strip()
+    
+    # 1. Check Protocol
+    is_insecure = cleaned_url.startswith("http://")
+    
+    # 2. Extract Domain/Host
+    host_match = re.search(r"https?://([^/:\?]+)", cleaned_url)
+    host = host_match.group(1) if host_match else cleaned_url
+    
+    # 3. Check for Suspicious Keywords in path
+    phishing_keywords = ["login", "verify", "secure", "update", "bank", "paypal", "signin", "account"]
+    matched_keywords = [kw for kw in phishing_keywords if kw in cleaned_url.lower()]
+    
+    # 4. Check for Suspicious TLDs
+    suspicious_tlds = [".xyz", ".top", ".cc", ".click", ".info", ".gq", ".tk", ".cf"]
+    has_suspicious_tld = any(tld in host for tld in suspicious_tlds)
+    
+    # Determine risk score
+    risk_score = 0
+    findings = []
+    
+    if is_insecure:
+        risk_score += 30
+        findings.append("Insecure HTTP protocol used (no SSL encryption).")
+    if matched_keywords:
+        risk_score += 25 * len(matched_keywords)
+        findings.append(f"Contains phishing keywords: {', '.join(matched_keywords)}")
+    if has_suspicious_tld:
+        risk_score += 30
+        findings.append("Registered under a suspicious Top-Level Domain (TLD) associated with spam/phishing.")
+        
+    # Cap risk score at 99
+    risk_score = min(99, risk_score)
+    is_malicious = risk_score >= 50
+    
+    result = {
+        "url": cleaned_url,
+        "extracted_host": host,
+        "is_malicious": is_malicious,
+        "phishing_risk_score": risk_score,
+        "matched_patterns_count": len(findings),
+        "findings": findings,
+        "security_recommendation": "Block navigation to this URL on internal DNS/Proxy, and review browser histories of users who accessed it."
+    }
+    return json.dumps(result, indent=2)
+
+@mcp.tool()
+def analyze_file_hash(file_hash: str) -> str:
+    """
+    Inspects a file hash (MD5, SHA-1, or SHA-256) dynamically using VirusTotal API.
+    Requires an active VIRUSTOTAL_API_KEY configured in your backend .env file.
+    
+    Args:
+        file_hash: The cryptographic file hash to scan (e.g. SHA-256).
+    """
+    cleaned_hash = file_hash.strip().lower()
+    if not re.match(r"^[a-f0-9]{32}$|^[a-f0-9]{40}$|^[a-f0-9]{64}$", cleaned_hash):
+        return json.dumps({"success": False, "error": f"Invalid cryptographic hash format: {file_hash}"})
+        
+    api_key = os.getenv("VIRUSTOTAL_API_KEY")
+    if not api_key or api_key == "your_virustotal_api_key_here" or len(api_key.strip()) == 0:
+        return json.dumps({
+            "success": False,
+            "error": "VirusTotal live reputation scan requires a valid VIRUSTOTAL_API_KEY configured in your backend .env file. Mock fallbacks are disabled per security configuration."
+        })
+        
+    try:
+        url = f"https://www.virustotal.com/api/v3/files/{cleaned_hash}"
+        req = urllib.request.Request(
+            url,
+            headers={
+                "x-apikey": api_key.strip(),
+                "Accept": "application/json",
+                "User-Agent": "Mozilla/5.0 (AI SOC Command Center)"
+            }
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+            attributes = payload.get("data", {}).get("attributes", {})
+            stats = attributes.get("last_analysis_stats", {})
+            malicious = stats.get("malicious", 0)
+            suspicious = stats.get("suspicious", 0)
+            undetected = stats.get("undetected", 0)
+            total = sum(stats.values())
+            
+            result = {
+                "success": True,
+                "hash": cleaned_hash,
+                "is_malicious": malicious > 0,
+                "malicious_count": malicious,
+                "suspicious_count": suspicious,
+                "undetected_count": undetected,
+                "total_engines": total,
+                "threat_score": int((malicious / max(1, total)) * 100),
+                "file_type": attributes.get("type_description") or "Unknown File Type",
+                "meaningful_name": attributes.get("meaningful_name") or "Unnamed Binary",
+                "file_size_bytes": attributes.get("size", 0),
+                "security_note": "VirusTotal live reputation scanner checked hash."
+            }
+            return json.dumps(result, indent=2)
+    except urllib.error.HTTPError as http_err:
+        if http_err.code == 404:
+            return json.dumps({
+                "success": True,
+                "hash": cleaned_hash,
+                "is_malicious": False,
+                "message": "File hash not found in VirusTotal threat signature databases. This is likely a custom binary or unknown safe file."
+            })
+        return json.dumps({"success": False, "error": f"VirusTotal API HTTP Error {http_err.code}: {http_err.reason}"})
+    except Exception as e:
+        return json.dumps({"success": False, "error": f"VirusTotal API Query Failed: {str(e)}"})
+
+@mcp.tool()
+def threat_feed_ticker() -> str:
+    """
+    Fetches the real-time CISA Cyber Security Alerts and advisories RSS feed
+    to extract live international threat campaigns and vulnerable assets.
+    """
+    url = "https://www.cisa.gov/cybersecurity-advisories/all.xml"
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (AI SOC Command Center)"}
+        )
+        with urllib.request.urlopen(req, timeout=5) as response:
+            xml_data = response.read()
+            root = ET.fromstring(xml_data)
+            
+            items = []
+            for channel in root.findall("channel"):
+                for item in channel.findall("item")[:10]:
+                    title = item.find("title")
+                    link = item.find("link")
+                    pub_date = item.find("pubDate")
+                    description = item.find("description")
+                    
+                    clean_desc = ""
+                    if description is not None and description.text:
+                        clean_desc = re.sub(r"<[^>]*>", "", description.text).strip()
+                        if len(clean_desc) > 200:
+                            clean_desc = clean_desc[:200] + "..."
+                            
+                    items.append({
+                        "title": title.text.strip() if title is not None and title.text else "Untitled Advisory",
+                        "link": link.text.strip() if link is not None and link.text else "",
+                        "published": pub_date.text.strip() if pub_date is not None and pub_date.text else "Unknown Date",
+                        "summary": clean_desc
+                    })
+                    
+            if not items:
+                entries = root.findall("{http://www.w3.org/2005/Atom}entry")
+                for entry in entries[:10]:
+                    title = entry.find("{http://www.w3.org/2005/Atom}title")
+                    link_el = entry.find("{http://www.w3.org/2005/Atom}link")
+                    link = link_el.attrib.get("href") if link_el is not None else ""
+                    updated = entry.find("{http://www.w3.org/2005/Atom}updated")
+                    summary = entry.find("{http://www.w3.org/2005/Atom}summary") or entry.find("{http://www.w3.org/2005/Atom}content")
+                    
+                    clean_desc = ""
+                    if summary is not None and summary.text:
+                        clean_desc = re.sub(r"<[^>]*>", "", summary.text).strip()
+                        if len(clean_desc) > 200:
+                            clean_desc = clean_desc[:200] + "..."
+                            
+                    items.append({
+                        "title": title.text.strip() if title is not None and title.text else "Untitled Advisory",
+                        "link": link,
+                        "published": updated.text.strip() if updated is not None and updated.text else "Unknown Date",
+                        "summary": clean_desc
+                    })
+                    
+            result = {
+                "success": True,
+                "feed_source": "CISA Cybersecurity Advisories RSS Feed",
+                "active_advisories_count": len(items),
+                "advisories": items
+            }
+            return json.dumps(result, indent=2)
+            
+    except Exception as e:
+        return json.dumps({
+            "success": False,
+            "error": f"Failed live fetching CISA advisories feed: {str(e)}"
+        })
 
 if __name__ == "__main__":
     mcp.run()

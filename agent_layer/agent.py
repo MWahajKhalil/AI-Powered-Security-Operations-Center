@@ -1,11 +1,23 @@
 import os
 import json
+import re
 from typing import Dict, Any, Tuple, Optional
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-# Load env variables (e.g. from .env file in backend)
-load_dotenv()
+# Try to resolve and load the .env file from multiple locations (root and backend directory)
+env_paths = [
+    os.path.join(os.path.dirname(__file__), "..", "backend", ".env"),
+    os.path.join(os.path.dirname(__file__), ".env"),
+    os.path.join(os.getcwd(), ".env"),
+    os.path.join(os.getcwd(), "backend", ".env")
+]
+for path in env_paths:
+    if os.path.exists(path):
+        load_dotenv(dotenv_path=path)
+        break
+else:
+    load_dotenv()
 
 class SecurityAgentOrchestrator:
     def __init__(self):
@@ -13,25 +25,24 @@ class SecurityAgentOrchestrator:
         self.api_key = os.getenv("GEMINI_API_KEY")
         self.has_real_llm = False
         
-        # In a production environment, validation ensures we don't block on invalid placeholders.
-        # Google AI Studio Gemini API keys strictly start with the 'AIzaSy' signature.
-        if self.api_key and self.api_key.startswith("AIzaSy"):
+        # Verify the key is populated and is not the default placeholder
+        if self.api_key and self.api_key != "your_gemini_api_key_here" and len(self.api_key.strip()) > 0:
             try:
-                genai.configure(api_key=self.api_key)
+                genai.configure(api_key=self.api_key.strip())
                 # Pass system_instruction explicitly in constructor to satisfy strict security linter rules
                 self.model = genai.GenerativeModel(
                     model_name="gemini-1.5-flash",
-                    system_instruction="You are an elite AI SecOps Incident Responder operating inside an advanced enterprise Security Command Center."
+                    system_instruction=(
+                        "You are an elite, expert AI Security Analyst operating in a Security Operations Center (SOC) dashboard. "
+                        "You have access to specialized Model Context Protocol (MCP) tools to help query system states and threat vectors."
+                    )
                 )  # type: ignore
                 self.has_real_llm = True
                 print("[Agent Layer] Gemini API successfully configured. Real LLM Reasoning active.")
             except Exception as e:
                 print(f"[Agent Layer] WARNING: Failed to configure Gemini client: {e}. Falling back to Rule-Based routing.")
         else:
-            if self.api_key:
-                print("[Agent Layer] INFO: Gemini API key in .env is a placeholder or format is invalid (must start with 'AIzaSy'). Falling back to high-fidelity local semantic routing.")
-            else:
-                print("[Agent Layer] INFO: No GEMINI_API_KEY found in environment. Falling back to high-fidelity local semantic routing.")
+            print("[Agent Layer] INFO: No GEMINI_API_KEY found in environment or key is a placeholder. Falling back to high-fidelity local semantic routing.")
 
     async def decide_tool(self, user_message: str, available_tools: list) -> Tuple[Optional[str], dict, str]:
         """
@@ -69,14 +80,14 @@ class SecurityAgentOrchestrator:
             "1. Determine if the user message requires executing a live security tool (e.g. check IP, lookup DNS, scan logs).\n"
             "2. If a tool is required: set 'chosen_tool' to its name, fill 'arguments', and write a concise statement of intent in the 'explanation' field.\n"
             "3. If NO tool is required (e.g., theoretical queries like 'What is a brute force attack?', greetings, general security discussions, or explanations of security metrics): "
-            "set 'chosen_tool' to null, 'arguments' to {{}}, and write a highly comprehensive, educational, executive-level security analyst response in the 'explanation' field. "
+            "set 'chosen_tool' to null, 'arguments' to {}, and write a highly comprehensive, educational, executive-level security analyst response in the 'explanation' field. "
             "Use beautiful markdown styling, headers, lists, and threat-modeling theories to explain your answer. Do not write a dry, short robotic sentence! Prove your expertise."
         )
 
         prompt = f"User Request: \"{user_message}\"\n\nJSON Response (strictly formatted JSON, no markdown fences):"
         
-        # Invoke Gemini 1.5 Flash
-        response = self.model.generate_content(
+        # Invoke Gemini 1.5 Flash with type safety ignores for generation_config dictionary structures
+        response = self.model.generate_content(  # type: ignore
             contents=[
                 {"role": "user", "parts": [system_instruction, prompt]}
             ],
@@ -135,7 +146,7 @@ An **Impossible Travel Anomaly** represents a physics-defying authentication pat
             return None, {}, explanation
 
         # 2. Explain Brute Force
-        if "brute force" in msg and ("what is" in msg or "explain" in msg or "how does" in msg):
+        if "brute force" in msg and ("what is" in msg or "explain" in msg or "how does" in msg or "brute-force" in msg):
             explanation = """### 🛡️ SecOps Threat Deep-Dive: SSH Brute Force Attacks
 
 An **SSH Brute Force Attack** represents an automated credential stuffing attempt where a malicious bot systematically guesses thousands of username/password combinations to gain unauthorized Shell access to your backend servers.
@@ -187,112 +198,120 @@ Welcome, Analyst. I am your Tier-2 Incident Investigation Assistant. I orchestra
             return None, {}, explanation
 
         # ============================================================================
-        # B. DYNAMIC TOOLS ROUTERS
+        # B. DYNAMIC GEOGRAPHICAL & IP ROUTING ENGINE
         # ============================================================================
 
-        # 1. DNS Lookup Router
-        if "dns" in msg or "resolve" in msg or "lookup" in msg:
-            if "dns_lookup" in tool_names:
-                import re
-                domains = re.findall(r'\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b', msg)
-                target = domains[0] if domains else "google.com"
-                return (
-                    "dns_lookup",
-                    {"domain": target},
-                    f"[Local Router] I analyzed the request and detected domain keyword. Selected dns_lookup tool for host '{target}'."
-                )
-
-        # 2. Ping Router
-        if "ping" in msg or "reach" in msg or "alive" in msg:
-            if "ping_host" in tool_names:
-                import re
-                ips_or_domains = re.findall(r'\b[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+\b', msg)
-                ips_or_domains = [x for x in ips_or_domains if x not in ["ping", "resolve", "reach", "alive"]]
-                target = ips_or_domains[0] if ips_or_domains else "8.8.8.8"
-                return (
-                    "ping_host",
-                    {"host": target},
-                    f"[Local Router] I analyzed the request and detected connection keyword. Selected ping_host tool for target '{target}'."
-                )
-
-        # 3. GeoIP Lookup Router
-        if "geo" in msg or "location" in msg or "locate" in msg or "where" in msg:
-            if "geoip_lookup" in tool_names:
-                import re
-                ips = re.findall(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', msg)
-                target = ips[0] if ips else "8.8.8.8"
-                return (
-                    "geoip_lookup",
-                    {"ip": target},
-                    f"[Local Router] I analyzed the request and detected location query. Selected geoip_lookup tool for IP '{target}'."
-                )
-
-        # 4. IP/Domain Reputation Catch-all Router
-        if "safe" in msg or "malicious" in msg or "threat" in msg or "check" in msg or "reputation" in msg or "abuse" in msg or "blacklist" in msg:
-            import re
-            ips = re.findall(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', msg)
-            if ips and "analyze_ip_reputation" in tool_names:
-                return (
-                    "analyze_ip_reputation",
-                    {"ip": ips[0]},
-                    f"[Local Router] I analyzed the request and detected IP reputation check. Selected analyze_ip_reputation tool for IP '{ips[0]}'."
-                )
+        # Resolve IP addresses dynamically
+        ips = re.findall(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', msg)
+        if ips:
+            target_ip = ips[0]
             
-            domains = re.findall(r'\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b', msg)
-            domains = [d for d in domains if not re.match(r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$', d)]
-            if domains and "analyze_domain_reputation" in tool_names:
-                stop_words = ["dns", "ping", "lookup", "resolve", "domain", "reputation", "threat", "check", "malicious", "safe", "blacklist"]
-                valid_domains = [d for d in domains if d not in stop_words]
-                target = valid_domains[0] if valid_domains else domains[0]
-                return (
-                    "analyze_domain_reputation",
-                    {"domain": target},
-                    f"[Local Router] I analyzed the request and detected domain reputation check. Selected analyze_domain_reputation tool for domain '{target}'."
-                )
+            # 1. Full Malicious Dynamic Correlation Scan
+            if any(k in msg for k in ["summarize", "correlate", "full audit", "aggregate", "audit ip", "profile"]):
+                if "summarize_malicious_activities" in tool_names:
+                    return "summarize_malicious_activities", {"ip": target_ip}, f"[Local Router] Running complete security correlation audit for IP '{target_ip}'."
 
-        # 5. Log Analysis Router
-        if "parse log" in msg or "analyze log" in msg or "auth log" in msg or "read log" in msg or "authentication log" in msg:
-            if "analyze_authentication_logs" in tool_names:
-                return (
-                    "analyze_authentication_logs",
-                    {},
-                    "[Local Router] I analyzed the request and detected log parsing keyword. Selected analyze_authentication_logs tool."
-                )
+            # 2. Ping Check
+            if any(k in msg for k in ["ping", "reach", "alive", "active", "online"]):
+                if "ping_host" in tool_names:
+                    return "ping_host", {"host": target_ip}, f"[Local Router] Detected Ping command for IP '{target_ip}'."
 
-        # 6. Brute Force Router
-        if "brute force" in msg or "brute-force" in msg or "failed attempt" in msg or "login attack" in msg or "multiple failure" in msg:
+            # 3. Location Check
+            if any(k in msg for k in ["location", "geo", "locate", "where", "coordinates", "city", "country"]):
+                if "geoip_lookup" in tool_names:
+                    return "geoip_lookup", {"ip": target_ip}, f"[Local Router] Detected GeoIP query for IP '{target_ip}'."
+
+            # 4. Reputation Scan (Default Fallback for IPs)
+            if "analyze_ip_reputation" in tool_names:
+                return "analyze_ip_reputation", {"ip": target_ip}, f"[Local Router] Initiating reputation threat assessment for IP '{target_ip}'."
+
+        # ============================================================================
+        # C. DYNAMIC DOMAIN ROUTING ENGINE
+        # ============================================================================
+
+        # Resolve Domain names dynamically
+        domains = re.findall(r'\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b', msg)
+        # Filter out parsed IPs from matching standard domain formats
+        domains = [d for d in domains if not re.match(r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$', d)]
+        
+        if domains:
+            target_domain = domains[0]
+            stop_words = ["dns", "ping", "lookup", "resolve", "domain", "reputation", "threat", "check", "malicious", "safe", "blacklist", "ssl", "cert", "expiry", "expire", "whois", "registrar", "registrant"]
+            if target_domain not in stop_words:
+                
+                # 1. SSL/TLS Certificate Expiry Check
+                if any(k in msg for k in ["ssl", "cert", "certificate", "expiry", "expire", "notafter"]):
+                    if "check_ssl_expiry" in tool_names:
+                        return "check_ssl_expiry", {"domain": target_domain}, f"[Local Router] Triggering live TLS certificate expiry check for domain '{target_domain}'."
+
+                # 2. Domain WHOIS Registration Check
+                if any(k in msg for k in ["whois", "registrar", "registrant", "created", "registration"]):
+                    if "whois_lookup" in tool_names:
+                        return "whois_lookup", {"domain": target_domain}, f"[Local Router] Running dynamic WHOIS protocol registration scan for domain '{target_domain}'."
+
+                # 3. DNS Resolution Check
+                if any(k in msg for k in ["dns", "resolve", "lookup", "dns_lookup"]):
+                    if "dns_lookup" in tool_names:
+                        return "dns_lookup", {"domain": target_domain}, f"[Local Router] Detected DNS Lookup resolution query for domain '{target_domain}'."
+
+                # 4. Domain Reputation Scan (Default Fallback for Domains)
+                if "analyze_domain_reputation" in tool_names:
+                    return "analyze_domain_reputation", {"domain": target_domain}, f"[Local Router] Initiating malicious signature check for domain '{target_domain}'."
+
+        # ============================================================================
+        # D. SECURITY HASH SCANNING ENGINE
+        # ============================================================================
+
+        # Resolve Cryptographic File Hashes dynamically (MD5, SHA-1, SHA-256)
+        hashes = re.findall(r'\b[a-fA-F0-9]{32}\b|\b[a-fA-F0-9]{40}\b|\b[a-fA-F0-9]{64}\b', msg)
+        if hashes:
+            target_hash = hashes[0]
+            if "analyze_file_hash" in tool_names:
+                return "analyze_file_hash", {"file_hash": target_hash}, f"[Local Router] Triggering live VirusTotal cryptographic file hash scan for signature '{target_hash}'."
+
+        # ============================================================================
+        # E. SECURITY LOGS ACTION PARSERS
+        # ============================================================================
+
+        # 1. sudo privilege escalation log check
+        if any(k in msg for k in ["sudo", "privilege", "escalation", "elevation", "root", "su"]):
+            if "detect_privilege_escalation" in tool_names:
+                return "detect_privilege_escalation", {}, "[Local Router] Scanning auth logs for sudo commands and administrative updates."
+
+        # 2. Brute Force log check
+        if any(k in msg for k in ["brute", "failed", "attack", "credential", "guessing", "guess", "failed_attempt"]):
             if "detect_brute_force" in tool_names:
-                return (
-                    "detect_brute_force",
-                    {},
-                    "[Local Router] I analyzed the request and detected brute force query. Selected detect_brute_force tool."
-                )
+                return "detect_brute_force", {}, "[Local Router] Detected brute force logs scanning intent."
 
-        # 7. Impossible Travel Router
-        if "impossible travel" in msg or "travel anomaly" in msg or "multi-country login" in msg or "location anomaly" in msg:
+        # 3. Impossible Travel log check
+        if any(k in msg for k in ["travel", "impossible", "velocity", "speed", "anomaly"]):
             if "detect_impossible_travel" in tool_names:
-                return (
-                    "detect_impossible_travel",
-                    {},
-                    "[Local Router] I analyzed the request and detected impossible travel query. Selected detect_impossible_travel tool."
-                )
+                return "detect_impossible_travel", {}, "[Local Router] Detected impossible travel logs anomaly scan."
 
-        # 8. Off-Hours Login Router
-        if "off hour" in msg or "off-hours" in msg or "late night login" in msg or "suspicious hour" in msg:
+        # 4. Off-Hours log check
+        if any(k in msg for k in ["hours", "night", "late", "evening", "off-hours"]):
             if "detect_off_hours_logins" in tool_names:
-                return (
-                    "detect_off_hours_logins",
-                    {},
-                    "[Local Router] I analyzed the request and detected off-hours login query. Selected detect_off_hours_logins tool."
-                )
+                return "detect_off_hours_logins", {}, "[Local Router] Detected off-hours logs administrative audit."
+
+        # 5. General Log parsing command
+        if any(k in msg for k in ["parse", "read", "syslog", "auth.log", "auth log", "logs"]):
+            if "analyze_authentication_logs" in tool_names:
+                return "analyze_authentication_logs", {}, "[Local Router] Parsing standard system auth logs."
+
+        # ============================================================================
+        # F. GLOBAL CYBER THREAT FEED TICKERS
+        # ============================================================================
+        if any(k in msg for k in ["ticker", "feed", "cisa", "advisory", "campaign", "cve", "threats"]):
+            if "threat_feed_ticker" in tool_names:
+                return "threat_feed_ticker", {}, "[Local Router] Live fetching cybersecurity advisories and campaign briefs."
 
         # No matching tool or predefined response found
         explanation = (
             "I parsed your request, but I could not find a suitable security tool or custom runbook response.\n"
-            "Try asking me to **'Ping 8.8.8.8'**, **'Find location for 8.8.8.8'**, **'Scan for brute-force attacks'**, or ask **'What is an impossible travel anomaly?'**!"
+            "Try asking me to **'Check SSL cert for google.com'**, **'Audit sudo logs'**, **'Show live threat ticker'**, or **'Summarize malicious coordinates for 8.8.8.8'**!"
         )
         if not self.api_key:
-            explanation += "\n\n*(Tip: Set a GEMINI_API_KEY in a .env file to enable dynamic AI reasoning!)*"
+            explanation += "\n\n*(Tip: Set an active GEMINI_API_KEY in your backend .env file to enable dynamic AI reasoning!)*"
             
         return None, {}, explanation
 
@@ -319,7 +338,7 @@ Welcome, Analyst. I am your Tier-2 Incident Investigation Assistant. I orchestra
                     f"Raw Tool Outcome Output:\n{tool_output}\n\n"
                     f"SOC Incident Report:"
                 )
-                response = self.model.generate_content([system_instruction, prompt])
+                response = self.model.generate_content([system_instruction, prompt])  # type: ignore
                 return response.text.strip()
             except Exception as e:
                 print(f"[Agent Layer] Gemini synthesis failed: {e}. Triggering local renderer fallback.")
@@ -456,6 +475,143 @@ Successfully parsed administrative log file:
 *   **Relational Logs Extracted**: {data.get('total_parsed_lines')} syslog entries mapped.
 *   **Ingress Audit Status**: Normal logs parameters listening.
 """
+
+        # 8. SSL Certificate Expiry Renderer
+        elif tool_name == "check_ssl_expiry":
+            if not data.get("success", False):
+                return f"### ❌ SSL Certificate Check Failed\n{data.get('error', 'Failed checking TLS certificate.')}"
+            is_exp = data.get("is_expired", False)
+            status_pill = "🔴 EXPIRED" if is_exp else "🟢 VALID & SECURE"
+            return f"""### 🔒 SSL/TLS Certificate Expiry Audit
+We retrieved the active SSL/TLS peer certificate details for domain **{data.get('domain')}**:
+
+*   **Certificate Status**: **{status_pill}**
+*   **Validity Remaining**: `{data.get('days_remaining')} days`
+*   **Expiration Date**: `{data.get('expiry_date')}`
+*   **Certificate Authority (Issuer)**: `{data.get('issuer')}`
+*   **Serial Number**: `{data.get('serialNumber')}`
+
+🛡️ **SecOps Advisory**: {"Immediate action required: The certificate is expired or expiring. Renew immediately to prevent site downtime or client warning indicators." if data.get('days_remaining', 365) < 15 else "The certificate is active, valid, and trusted. No security actions required."}
+"""
+
+        # 9. Domain WHOIS Registration Renderer
+        elif tool_name == "whois_lookup":
+            if not data.get("success", False):
+                return f"### ❌ WHOIS Resolution Error\n{data.get('error', 'Failed executing WHOIS lookup.')}"
+            return f"""### 📋 Domain WHOIS Registration Registry
+We executed a raw socket WHOIS lookup on port 43 for domain **{data.get('domain')}**:
+
+*   **Attributed Registrar**: `{data.get('registrar')}`
+*   **Creation / Registration Date**: `{data.get('creation_date')}`
+*   **Registry Expiration Date**: `{data.get('expiry_date')}`
+*   **Authoritative Server**: `{data.get('authoritative_whois_server')}`
+
+#### 🔍 Authoritative WHOIS Registry Raw Snippet
+```
+{data.get('raw_record_snippet')}
+```
+
+🛡️ **SecOps Status**: Domain lookup completed successfully. Review age and registrar to verify trust levels.
+"""
+
+        # 10. VirusTotal File Hash Reputation Renderer
+        elif tool_name == "analyze_file_hash":
+            if not data.get("success", False):
+                return f"### ❌ VirusTotal Reputation Scan Failed\n{data.get('error', 'Cryptographic hash inspection failed.')}"
+            if "message" in data:
+                return f"""### 🛡️ File Hash Threat Reputation Scan
+Security lookup completed for cryptographic signature **{data.get('hash')}**:
+
+*   **Status Index**: **🟢 DETECTIONS NOT FOUND**
+*   **Scan Database Message**: {data.get('message')}
+
+🛡️ **SecOps Action**: This hash is not cataloged in VirusTotal. It could be a secure, custom-compiled local asset, or a highly targeted zero-day threat signature. Perform local sandboxing to verify.
+"""
+            is_mal = data.get("is_malicious", False)
+            status_pill = "🔴 HIGH-RISK MALICIOUS ARTIFACT" if is_mal else "🟢 UNFLAGGED / SAFE BINARY"
+            return f"""### 🛡️ File Hash Threat Reputation Scan
+Live VirusTotal file intelligence query completed for signature **{data.get('hash')}**:
+
+*   **Threat Assessment Evaluation**: **{status_pill}**
+*   **Security Detections**: `{data.get('malicious_count')} / {data.get('total_engines')} antivirus engines flagged this file`
+*   **Calculated Threat Index Score**: `{data.get('threat_score')} / 100`
+*   **Reported Binary Filename**: `{data.get('meaningful_name')}`
+*   **File Category & Format**: {data.get('file_type')} (`{data.get('file_size_bytes')} bytes`)
+
+⚠️ **Incident Response Action**: {"Binary classified as malicious. Purge this file immediately from all endpoints, update Endpoint Detection WAF rules, and trigger full system scans." if is_mal else "The cryptographic signature is clean. Normal execution allowed."}
+"""
+
+        # 11. CISA Threat Feed Ticker Renderer
+        elif tool_name == "threat_feed_ticker":
+            if not data.get("success", False):
+                return f"### ❌ Threat Feed Connection Error\n{data.get('error', 'Failed loading advisories.')}"
+            
+            advisories = data.get("advisories", [])
+            if not advisories:
+                return "### 📰 Global Cybersecurity Threat Feed\nLive feed fetched successfully. No critical alerts are reported in the active window."
+                
+            report = f"### 📰 Global Cybersecurity Threat Feed\nFetched active advisories from **{data.get('feed_source')}**:\n\n"
+            for adv in advisories:
+                report += f"#### ⚠️ {adv.get('title')}\n"
+                report += f"*   **Published Date**: {adv.get('published')}\n"
+                report += f"*   **Campaign Summary**: {adv.get('summary')}\n"
+                if adv.get("link"):
+                    report += f"*   **Official Advisory Details Link**: {adv.get('link')}\n"
+                report += "\n"
+            return report
+
+        # 12. Log Privilege Escalation Renderer
+        elif tool_name == "detect_privilege_escalation":
+            if not data.get("success", False):
+                return f"### ❌ Privilege Scan Error\n{data.get('error', 'Syslog privilege parsing failed.')}"
+                
+            incidents = data.get("incidents", [])
+            if not incidents:
+                return f"""### 🛡️ Administrative Privilege Escalation Scan
+The Syslog privilege escalation auditor completed scanning:
+
+*   **Evaluation Status**: **🟢 CLEAN - NO ADMINISTRATIVE ESCALATIONS**
+*   **Audit Target Log**: `{data.get('log_file')}`
+*   **Advisory**: Routine sudo executions are baseline secure.
+"""
+            report = f"### ⚠️ WARNING: ADMINISTRATIVE SUDO PRIVILEGE SHIFTS\nThe syslog parser resolved active administrative escalations in `{data.get('log_file')}`:\n\n"
+            for inc in incidents:
+                status = inc.get("status")
+                status_pill = "🔴 FAILED" if status == "FAILED" else "🟡 SUCCESS"
+                report += f"*   **Time Stamp**: `{inc.get('timestamp')}` on host `{inc.get('host')}`\n"
+                report += f"    *   **User Action**: Account `{inc.get('user')}` attempted elevation to target user `{inc.get('target_user')}`\n"
+                report += f"    *   **Authorization Status**: **{status_pill}** (Severity: {inc.get('severity')})\n"
+                report += f"    *   **Binary Command Executed**: `{inc.get('command')}`\n\n"
+            report += f"🛡️ **SecOps Recommended Action**: Verify authorization for successful elevations. Review all failed privilege elevations as they represent potential lateral movement attempts."
+            return report
+
+        # 13. Dynamic IP Correlation Audit Renderer
+        elif tool_name == "summarize_malicious_activities":
+            if not data.get("success", False):
+                return f"### ❌ Malicious Audit Scan Failed\n{data.get('error', 'IP correlation audit failed.')}"
+                
+            gp = data.get("geoip_profile", {})
+            ps = data.get("live_port_scan", {})
+            tr = data.get("local_syslog_traces", {})
+            risk = data.get("risk_index", "LOW")
+            risk_pill = "🔴 HIGH RISK PROFILE" if risk == "HIGH" else "🟡 MEDIUM RISK PROFILE" if risk == "MEDIUM" else "🟢 LOW RISK PROFILE"
+            
+            report = f"""### 🚨 SOC Core Incident Report: Malicious IP Correlation Audit
+We correlated live geographical coordinates, network interface port states, and local auth syslog traces for **{data.get('target_ip')}**:
+
+*   **Risk Categorization**: **{risk_pill}**
+*   **Geographical Coordinates**: {gp.get('city')}, {gp.get('country')} (`{gp.get('coordinates')}`)
+*   **Live Open Port Scan**: Detected **{ps.get('open_ports_count')} open service ports** out of {len(ps.get('scanned_ports', []))} checked:
+    *   `Open Ports: {', '.join(str(p) for p in ps.get('open_ports', [])) or 'None'}`
+*   **Syslog Occurrences Trace**: Found **{tr.get('trace_count')} historical logon occurrences** in auth syslog logs.
+"""
+            if tr.get('occurrences'):
+                report += "\n#### 📋 Local Syslog History Traces\n"
+                for idx, occ in enumerate(tr.get('occurrences')[:5]):
+                    report += f"*   `[{occ.get('timestamp')}]` status: **{occ.get('status')}** for user `{occ.get('username')}` (Service: `{occ.get('service')}`)\n"
+                    
+            report += f"\n🛡️ **Incident Mitigation Plan**: {data.get('mitigation_plan')}"
+            return report
 
         # General Fallback
         return f"### {tool_name} Result\n{json.dumps(data, indent=2)}"

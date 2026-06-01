@@ -392,5 +392,125 @@ def detect_impossible_travel(log_file_path: str = None) -> str:
     }
     return json.dumps(result, indent=2)
 
+@mcp.tool()
+def detect_privilege_escalation(log_file_path: str = None) -> str:
+    """
+    Scans system authentication logs to audit sudo command executions,
+    failed privilege elevation attempts, and unauthorized administrative activities.
+    
+    Args:
+        log_file_path: Optional path to log file (defaults to database/auth.log).
+    """
+    target_path = get_log_path(log_file_path)
+    if not os.path.exists(target_path):
+        return json.dumps({"success": False, "error": f"Log file not found: {target_path}"})
+        
+    escalations = []
+    
+    # Standard sudo log patterns
+    # E.g. Jun  1 14:25:36 dev sudo:  analyst : TTY=pts/0 ; PWD=/home ; USER=root ; COMMAND=/bin/sh
+    sudo_regex = r"(\S+\s+\d+\s+\d{2}:\d{2}:\d{2})\s+(\S+)\s+sudo(?:\[\d+\])?:\s+(\S+)\s+:\s+TTY=\S+\s+;\s+PWD=\S+\s+;\s+USER=(\S+)\s+;\s+COMMAND=(.*)"
+    failed_sudo_regex = r"(\S+\s+\d+\s+\d{2}:\d{2}:\d{2})\s+(\S+)\s+sudo(?:\[\d+\])?:\s+pam_unix\(sudo:auth\):\s+authentication failure;\s+logname=\S*\s+uid=\d+\s+euid=\d+\s+tty=\S+\s+ruser=\S*\s+rhost=\S*\s+user=(\S+)"
+    
+    with open(target_path, "r") as f:
+        for line in f:
+            line_str = line.strip()
+            
+            match = re.search(sudo_regex, line_str)
+            if match:
+                timestamp_str, host, user, target_user, command = match.groups()
+                escalations.append({
+                    "timestamp": timestamp_str,
+                    "host": host,
+                    "user": user,
+                    "target_user": target_user,
+                    "command": command.strip(),
+                    "status": "SUCCESS",
+                    "severity": "HIGH" if command.strip() in ["/bin/sh", "/bin/bash", "su", "su -"] else "MEDIUM",
+                    "alert": "PRIVILEGE_ELEVATION_SUDO_RUN"
+                })
+                continue
+                
+            failed_match = re.search(failed_sudo_regex, line_str)
+            if failed_match:
+                timestamp_str, host, user = failed_match.groups()
+                escalations.append({
+                    "timestamp": timestamp_str,
+                    "host": host,
+                    "user": user,
+                    "target_user": "root",
+                    "command": "UNKNOWN (Authentication Failed)",
+                    "status": "FAILED",
+                    "severity": "CRITICAL",
+                    "alert": "PRIVILEGE_ELEVATION_AUTHENTICATION_FAILURE"
+                })
+                
+    result = {
+        "success": True,
+        "log_file": target_path,
+        "total_escalations_parsed": len(escalations),
+        "incidents": escalations,
+        "security_recommendation": "Enforce strict sudoers configuration, restrict high-risk binaries (/bin/sh, /bin/bash, su) under sudo, and enable real-time notifications for root actions."
+    }
+    return json.dumps(result, indent=2)
+
+@mcp.tool()
+def summarize_malicious_activities(ip: str) -> str:
+    """
+    Performs a complete dynamic security audit correlating GeoIP coordinates,
+    live TCP port socket scanning, and parsing real authentication log traces.
+    
+    Args:
+        ip: The target IP address (e.g. '8.8.8.8') to correlate.
+    """
+    import socket
+    cleaned_ip = "".join(c for c in ip if c.isalnum() or c in ".-")
+    if not re.match(r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$", cleaned_ip):
+        return json.dumps({"success": False, "error": f"Invalid IP address format: {ip}"})
+        
+    geoip_data = get_geoip(cleaned_ip)
+    
+    common_ports = [21, 22, 80, 443, 3306, 8080]
+    open_ports = []
+    for port in common_ports:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.4)
+        result = s.connect_ex((cleaned_ip, port))
+        if result == 0:
+            open_ports.append(port)
+        s.close()
+        
+    log_traces = []
+    target_path = get_log_path()
+    if os.path.exists(target_path):
+        with open(target_path, "r") as f:
+            for line in f:
+                parsed = parse_syslog_line(line)
+                if parsed and parsed.get("ip") == cleaned_ip:
+                    parsed.pop("datetime", None)
+                    log_traces.append(parsed)
+                    
+    result = {
+        "success": True,
+        "target_ip": cleaned_ip,
+        "geoip_profile": {
+            "country": geoip_data.get("country", "Unknown"),
+            "city": geoip_data.get("city", "Unknown"),
+            "coordinates": f"{geoip_data.get('latitude', 0.0)}, {geoip_data.get('longitude', 0.0)}"
+        },
+        "live_port_scan": {
+            "scanned_ports": common_ports,
+            "open_ports": open_ports,
+            "open_ports_count": len(open_ports)
+        },
+        "local_syslog_traces": {
+            "trace_count": len(log_traces),
+            "occurrences": log_traces
+        },
+        "risk_index": "HIGH" if (len(log_traces) > 5 or len(open_ports) > 2) else "MEDIUM" if (len(log_traces) > 0 or len(open_ports) > 0) else "LOW",
+        "mitigation_plan": "Update edge firewall rules to isolate IP if risk_index is HIGH. Reset keys for accounts traced in log."
+    }
+    return json.dumps(result, indent=2)
+
 if __name__ == "__main__":
     mcp.run()
