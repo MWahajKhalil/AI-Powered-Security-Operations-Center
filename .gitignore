@@ -23,5 +23,3 @@ database/*.db-journal
 # Operating System specific files
 .DS_Store
 Thumbs.db
-
-docs

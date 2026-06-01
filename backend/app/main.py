@@ -29,10 +29,12 @@ async def lifespan(app: FastAPI):
     try:
         print("[Lifespan] Starting MCP Client and spawning Network Analysis Server subprocess...")
         await mcp_client_manager.connect_to_server(settings.NETWORK_ANALYSIS_SERVER_PATH)
+        print("[Lifespan] Spawning Threat Intelligence Server subprocess...")
+        await mcp_client_manager.connect_to_server(settings.THREAT_INTEL_SERVER_PATH)
         tools = await mcp_client_manager.list_available_tools()
         print(f"[Lifespan] Discovered MCP Tools: {[t['name'] for t in tools]}")
     except Exception as e:
-        print(f"[Lifespan] CRITICAL: Failed to launch MCP Server on startup: {str(e)}")
+        print(f"[Lifespan] CRITICAL: Failed to launch MCP Servers on startup: {str(e)}")
         
     yield
     

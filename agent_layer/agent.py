@@ -108,11 +108,11 @@ class SecurityAgentOrchestrator:
         tool_names = [t["name"] for t in available_tools]
         
         # 1. DNS Lookup Router
-        if "dns" in msg or "resolve" in msg or "domain" in msg or "lookup" in msg:
+        if "dns" in msg or "resolve" in msg or "lookup" in msg:
             if "dns_lookup" in tool_names:
                 # Basic string parsing to find domain-like strings
                 import re
-                domains = re.findall(r'[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', msg)
+                domains = re.findall(r'\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b', msg)
                 target = domains[0] if domains else "google.com"
                 return (
                     "dns_lookup",
@@ -124,7 +124,7 @@ class SecurityAgentOrchestrator:
         if "ping" in msg or "reach" in msg or "alive" in msg:
             if "ping_host" in tool_names:
                 import re
-                ips_or_domains = re.findall(r'[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+', msg)
+                ips_or_domains = re.findall(r'\b[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+\b', msg)
                 ips_or_domains = [x for x in ips_or_domains if x not in ["ping", "resolve", "reach", "alive"]]
                 target = ips_or_domains[0] if ips_or_domains else "8.8.8.8"
                 return (
@@ -133,10 +133,46 @@ class SecurityAgentOrchestrator:
                     f"[Local Router] I analyzed the request and detected connection keyword. Selected ping_host tool for target '{target}'."
                 )
 
+        # 3. GeoIP Lookup Router
+        if "geo" in msg or "location" in msg or "locate" in msg or "where" in msg:
+            if "geoip_lookup" in tool_names:
+                import re
+                ips = re.findall(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', msg)
+                target = ips[0] if ips else "8.8.8.8"
+                return (
+                    "geoip_lookup",
+                    {"ip": target},
+                    f"[Local Router] I analyzed the request and detected location query. Selected geoip_lookup tool for IP '{target}'."
+                )
+
+        # 4. IP/Domain Reputation Catch-all Router
+        if "safe" in msg or "malicious" in msg or "threat" in msg or "check" in msg or "reputation" in msg or "abuse" in msg or "blacklist" in msg:
+            import re
+            ips = re.findall(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b', msg)
+            if ips and "analyze_ip_reputation" in tool_names:
+                return (
+                    "analyze_ip_reputation",
+                    {"ip": ips[0]},
+                    f"[Local Router] I analyzed the request and detected IP reputation check. Selected analyze_ip_reputation tool for IP '{ips[0]}'."
+                )
+            
+            domains = re.findall(r'\b[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b', msg)
+            domains = [d for d in domains if not re.match(r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$', d)]
+            if domains and "analyze_domain_reputation" in tool_names:
+                # Filter out stop words
+                stop_words = ["dns", "ping", "lookup", "resolve", "domain", "reputation", "threat", "check", "malicious", "safe", "blacklist"]
+                valid_domains = [d for d in domains if d not in stop_words]
+                target = valid_domains[0] if valid_domains else domains[0]
+                return (
+                    "analyze_domain_reputation",
+                    {"domain": target},
+                    f"[Local Router] I analyzed the request and detected domain reputation check. Selected analyze_domain_reputation tool for domain '{target}'."
+                )
+
         # No matching tool found
         explanation = (
-            "I parsed your request, but I could not find a suitable networking tool to execute.\n"
-            "Try asking me to 'Ping 8.8.8.8' or 'Run a DNS lookup on google.com'!"
+            "I parsed your request, but I could not find a suitable security tool to execute.\n"
+            "Try asking me to 'Ping 8.8.8.8', 'Run a DNS lookup on google.com', 'Find location for 8.8.8.8', or check the reputation of '198.51.100.42' or 'malicious-tracker.xyz'!"
         )
         if not self.api_key:
             explanation += "\n\n*(Tip: Set a GEMINI_API_KEY in a .env file to enable dynamic AI reasoning!)*"

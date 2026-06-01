@@ -2,6 +2,10 @@ from mcp.server.fastmcp import FastMCP
 import json
 import random
 import re
+import os
+import urllib.request
+import urllib.error
+import time
 
 # Initialize FastMCP Server for Threat Intelligence
 mcp = FastMCP("Threat-Intelligence-Server")
@@ -20,6 +24,7 @@ def is_valid_domain(domain: str) -> bool:
 def analyze_ip_reputation(ip: str) -> str:
     """
     Check the security reputation of a specific IP address to see if it is associated with malicious activity.
+    Queries the live AbuseIPDB API if configured, otherwise falls back to simulated intelligence.
     
     Args:
         ip: The target IPv4 address (e.g. '1.1.1.1' or '198.51.100.42').
@@ -27,8 +32,44 @@ def analyze_ip_reputation(ip: str) -> str:
     if not is_valid_ip(ip):
         return json.dumps({"success": False, "error": f"Invalid IPv4 address format: {ip}"})
 
-    # TEMPORARY/MOCK DATA: Simulated threat databases (representing API lookups to VirusTotal/AbuseIPDB)
-    # Known simulated threat lists
+    # Try to load live AbuseIPDB credentials
+    api_key = os.getenv("ABUSEIPDB_API_KEY")
+    if api_key and api_key != "your_abuseipdb_api_key_here" and len(api_key.strip()) > 0:
+        try:
+            url = f"https://api.abuseipdb.com/api/v2/check?ipAddress={ip}&maxAgeInDays=90&verbose=true"
+            req = urllib.request.Request(
+                url, 
+                headers={
+                    "Key": api_key.strip(),
+                    "Accept": "application/json",
+                    "User-Agent": "Mozilla/5.0 (AI SOC Command Center)"
+                }
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+                data = payload.get("data", {})
+                
+                score = data.get("abuseConfidenceScore", 0)
+                reports = data.get("totalReports", 0)
+                country_name = data.get("countryName", "Unknown")
+                
+                result = {
+                    "is_malicious": score > 20,
+                    "threat_score": score,
+                    "category": data.get("usageType") or "Clean / Unclassified",
+                    "abuse_score": score,
+                    "country": country_name,
+                    "detections": f"{reports} security engine reports flag this IP on AbuseIPDB.",
+                    "integration_note": "Production API: Connected to live AbuseIPDB Check Core Endpoint."
+                }
+                return json.dumps(result, indent=2)
+        except Exception as e:
+            # Fall back to simulated DB if request fails (resilience)
+            pass
+
+    # ============================================================================
+    # FALLBACK MOCK DATA (If no API key provided or API call fails)
+    # ============================================================================
     known_threats = {
         "198.51.100.42": {
             "is_malicious": True,
@@ -48,14 +89,12 @@ def analyze_ip_reputation(ip: str) -> str:
         }
     }
 
-    # Clean IP lists
     known_cleans = {
         "8.8.8.8": "Google Public DNS",
         "1.1.1.1": "Cloudflare DNS Resolver",
         "127.0.0.1": "Local Host Loopback"
     }
 
-    # Determine reputation result
     if ip in known_threats:
         result = known_threats[ip]
     elif ip in known_cleans:
@@ -82,19 +121,14 @@ def analyze_ip_reputation(ip: str) -> str:
             "detections": f"{'4 / 64' if is_suspicious else '0 / 64'} engines flagged this IP"
         }
 
-    # Add reference showing how real API integrations are structured
-    result["integration_note"] = (
-        "Production API: To query live data, replace this logic with standard HTTP client requests "
-        "to 'https://api.abuseipdb.com/api/v2/check' or 'https://www.virustotal.com/api/v3/ip_addresses/{ip}' "
-        "using authorization headers."
-    )
-    
+    result["integration_note"] = "Simulation Mode: Enter an active ABUSEIPDB_API_KEY in .env to query live threat scans."
     return json.dumps(result, indent=2)
 
 @mcp.tool()
 def analyze_domain_reputation(domain: str) -> str:
     """
     Check the security reputation of a domain to detect phishing, malvertising, or registration spikes.
+    Queries the live VirusTotal v3 API if configured, otherwise falls back to simulated intelligence.
     
     Args:
         domain: The domain name to analyze (e.g. 'secure-login-bank.com').
@@ -103,7 +137,49 @@ def analyze_domain_reputation(domain: str) -> str:
     if not is_valid_domain(cleaned_domain):
         return json.dumps({"success": False, "error": f"Invalid domain name format: {domain}"})
 
-    # TEMPORARY/MOCK DATA: Simulated lookups (representing WHOIS and Cisco Talos APIs)
+    # Try to load live VirusTotal credentials
+    api_key = os.getenv("VIRUSTOTAL_API_KEY")
+    if api_key and api_key != "your_virustotal_api_key_here" and len(api_key.strip()) > 0:
+        try:
+            url = f"https://www.virustotal.com/api/v3/domains/{cleaned_domain}"
+            req = urllib.request.Request(
+                url, 
+                headers={
+                    "x-apikey": api_key.strip(),
+                    "User-Agent": "Mozilla/5.0 (AI SOC Command Center)"
+                }
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+                attributes = payload.get("data", {}).get("attributes", {})
+                
+                stats = attributes.get("last_analysis_stats", {})
+                malicious_count = stats.get("malicious", 0)
+                score = int((malicious_count / max(1, sum(stats.values()))) * 100)
+                
+                creation_date = attributes.get("creation_date")
+                age_days = 365
+                if creation_date:
+                    age_seconds = time.time() - creation_date
+                    age_days = int(age_seconds / 86400)
+                
+                result = {
+                    "domain": cleaned_domain,
+                    "is_malicious": malicious_count > 0,
+                    "threat_score": score,
+                    "status": "Malicious / Flagged" if malicious_count > 0 else "Safe",
+                    "registrar": attributes.get("registrar", "Unknown Registrar"),
+                    "age_days": age_days,
+                    "integration_note": "Production API: Connected to live VirusTotal v3 Domain Intelligence Endpoint."
+                }
+                return json.dumps(result, indent=2)
+        except Exception as e:
+            # Fall back to simulated DB if request fails
+            pass
+
+    # ============================================================================
+    # FALLBACK MOCK DATA (If no API key provided or API call fails)
+    # ============================================================================
     suspicious_keywords = ["login", "bank", "secure", "verify", "update", "paypal", "crypto"]
     has_keyword = any(kw in cleaned_domain for kw in suspicious_keywords)
     
@@ -132,18 +208,15 @@ def analyze_domain_reputation(domain: str) -> str:
         "status": status,
         "registrar": "NameCheap Inc." if is_malicious else "GoDaddy LLC",
         "age_days": random.randint(1, 30) if is_malicious else random.randint(300, 5000),
-        "integration_note": (
-            "Production API: To fetch live domain metadata, connect to WHOIS scrapers "
-            "or the VirusTotal Domain Intelligence endpoint 'https://www.virustotal.com/api/v3/domains/{domain}'."
-        )
+        "integration_note": "Simulation Mode: Enter a VIRUSTOTAL_API_KEY in .env to query live domain metadata."
     }
-
     return json.dumps(result, indent=2)
 
 @mcp.tool()
 def geoip_lookup(ip: str) -> str:
     """
     Perform a GeoIP lookup to find the physical location, ISP, and timezone of a network address.
+    Queries the live keyless IP-API server, falling back to simulated data only if offline.
     
     Args:
         ip: The target IPv4 address to lookup (e.g. '8.8.8.8').
@@ -151,7 +224,35 @@ def geoip_lookup(ip: str) -> str:
     if not is_valid_ip(ip):
         return json.dumps({"success": False, "error": f"Invalid IPv4 address format: {ip}"})
 
-    # Known standard addresses
+    # Try keyless, free live GeoIP scan
+    try:
+        url = f"http://ip-api.com/json/{ip}"
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (AI SOC Command Center)"}
+        )
+        with urllib.request.urlopen(req, timeout=4) as response:
+            data = json.loads(response.read().decode("utf-8"))
+            if data.get("status") == "success":
+                result = {
+                    "country": data.get("country", "Unknown Country"),
+                    "country_code": data.get("countryCode", "UN"),
+                    "city": data.get("city", "Unknown City"),
+                    "region": data.get("regionName", "Unknown Region"),
+                    "latitude": data.get("lat", 0.0),
+                    "longitude": data.get("lon", 0.0),
+                    "isp": data.get("isp", "Unknown ISP"),
+                    "query_ip": ip,
+                    "integration_note": "Production API: Connected to live keyless IP-API server."
+                }
+                return json.dumps(result, indent=2)
+    except Exception as e:
+        # Fall back to simulated DB if network is down
+        pass
+
+    # ============================================================================
+    # FALLBACK MOCK DATA (If offline or query fails)
+    # ============================================================================
     locations = {
         "8.8.8.8": {
             "country": "United States",
@@ -176,7 +277,6 @@ def geoip_lookup(ip: str) -> str:
     if ip in locations:
         result = locations[ip]
     else:
-        # Generates deterministic location based on IP segments to look completely realistic
         octets = [int(o) for o in ip.split(".")]
         lat = round(30.0 + (octets[2] % 20) - 10.0, 4)
         lon = round(10.0 + (octets[3] % 40) - 20.0, 4)
@@ -192,11 +292,7 @@ def geoip_lookup(ip: str) -> str:
         }
 
     result["query_ip"] = ip
-    result["integration_note"] = (
-        "Production API: To resolve live locations, utilize standard web services "
-        "like MaxMind GeoIP2 databases, ipapi.co, or free-safe endpoints like 'http://ip-api.com/json/{ip}'."
-    )
-
+    result["integration_note"] = "Simulation Mode: Active GeoIP offline fallback triggered."
     return json.dumps(result, indent=2)
 
 if __name__ == "__main__":

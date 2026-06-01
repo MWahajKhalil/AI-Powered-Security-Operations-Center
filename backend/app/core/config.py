@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     
     # Path to our standard MCP servers
     NETWORK_ANALYSIS_SERVER_PATH: str = "/Users/mwahajkhalil/Learnings/MCP Project/mcp_servers/network_analysis/server.py"
+    THREAT_INTEL_SERVER_PATH: str = "/Users/mwahajkhalil/Learnings/MCP Project/mcp_servers/threat_intel/server.py"
 
     # Path to local SQLite database
     DATABASE_PATH: str = "/Users/mwahajkhalil/Learnings/MCP Project/database/soc_dashboard.db"
