@@ -9,10 +9,10 @@ interface SidebarProps {
 
 export default function Sidebar({ activeView, setActiveView }: SidebarProps) {
   return (
-    <aside className="w-64 bg-[#0D1420]/80 backdrop-blur-md border-r border-white/5 flex flex-col h-full z-10 transition-all duration-300">
+    <aside className="w-64 bg-[#0D1420]/80 backdrop-blur-md border-r border-white/5 flex flex-col h-full z-10 transition-all duration-300 select-none">
       {/* Brand Header */}
       <div className="p-6 border-b border-white/5 flex items-center gap-3">
-        <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-[#7F00FF] to-[#00F2FE] flex items-center justify-center shadow-[0_0_15px_rgba(0,242,254,0.3)]">
+        <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-[#6366F1] to-[#0EA5E9] flex items-center justify-center shadow-[0_4px_12px_rgba(14,165,233,0.15)]">
           <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
@@ -32,7 +32,7 @@ export default function Sidebar({ activeView, setActiveView }: SidebarProps) {
           onClick={() => setActiveView("dashboard")}
           className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer ${
             activeView === "dashboard"
-              ? "bg-[#00F2FE]/10 text-[#00F2FE] border border-[#00F2FE]/25 shadow-[0_0_15px_rgba(0,242,254,0.06)]"
+              ? "bg-[#0EA5E9]/10 text-[#0EA5E9] border border-[#0EA5E9]/25 shadow-[0_4px_12px_rgba(14,165,233,0.04)]"
               : "text-[#8F9CAE] hover:text-white hover:bg-white/3 border border-transparent"
           }`}
         >
@@ -47,7 +47,7 @@ export default function Sidebar({ activeView, setActiveView }: SidebarProps) {
           onClick={() => setActiveView("chat")}
           className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer ${
             activeView === "chat"
-              ? "bg-[#00F2FE]/10 text-[#00F2FE] border border-[#00F2FE]/25 shadow-[0_0_15px_rgba(0,242,254,0.06)]"
+              ? "bg-[#0EA5E9]/10 text-[#0EA5E9] border border-[#0EA5E9]/25 shadow-[0_4px_12px_rgba(14,165,233,0.04)]"
               : "text-[#8F9CAE] hover:text-white hover:bg-white/3 border border-transparent"
           }`}
         >
@@ -61,7 +61,7 @@ export default function Sidebar({ activeView, setActiveView }: SidebarProps) {
       {/* Analyst ID Card Foot */}
       <div className="p-4 border-t border-white/5 bg-black/10">
         <div className="flex items-center gap-3 p-2 bg-white/2 rounded-lg border border-white/5">
-          <div className="h-7 w-7 rounded-full bg-[#7F00FF]/25 border border-[#7F00FF]/50 flex items-center justify-center text-[10px] font-bold text-[#00F2FE]">
+          <div className="h-7 w-7 rounded-full bg-[#6366F1]/20 border border-[#6366F1]/40 flex items-center justify-center text-[10px] font-bold text-[#0EA5E9]">
             AN
           </div>
           <div className="overflow-hidden">

@@ -8,17 +8,12 @@ import RecentLogs from "@/components/RecentLogs";
 import ThreatChart from "@/components/ThreatChart";
 import AuditTerminal from "@/components/AuditTerminal";
 import ThreatIntelChat from "@/components/ThreatIntelChat";
-import CyberGridBackground from "@/components/CyberGridBackground";
 
 export default function Home() {
   const [activeView, setActiveView] = useState<"dashboard" | "chat">("dashboard");
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#080C14] text-white relative">
-      {/* 0. Sci-Fi Holographic Visual HUD Overlays */}
-      <CyberGridBackground />
-      <div className="hud-scanner" />
-
+    <div className="flex h-screen w-screen overflow-hidden bg-[#0A0C10] text-[#F8FAFC] relative">
       {/* 1. Sidebar Left Dock */}
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
@@ -28,12 +23,12 @@ export default function Home() {
         <Header activeView={activeView} />
 
         {/* Dynamic Content Pane */}
-        <main className="flex-1 overflow-y-auto p-6 bg-[#080C14]/40 relative">
+        <main className="flex-1 overflow-y-auto p-6 bg-[#0A0C10] relative">
           {/* Dashboard View */}
           {activeView === "dashboard" && (
             <div className="flex flex-col gap-6 fade-in">
               {/* Glass Header Info Card */}
-              <div className="glass-card cyber-card p-6 border-l-4 border-l-[#00F2FE]">
+              <div className="glass-card p-6 border-l-4 border-l-[#0EA5E9] bg-slate-900/10">
                 <h2 className="text-sm font-extrabold tracking-wider text-white">
                   SOC COMMAND OVERVIEW DECK
                 </h2>
@@ -91,11 +86,11 @@ export default function Home() {
           {activeView === "chat" && (
             <div className="h-[calc(100vh-120px)] flex flex-col gap-6 fade-in overflow-hidden">
               {/* Top Banner Info */}
-              <div className="glass-card cyber-card p-4 border-l-4 border-l-[#7F00FF] bg-[#0D1420]/45 flex-shrink-0">
+              <div className="glass-card p-4 border-l-4 border-l-[#6366F1] bg-slate-900/10 flex-shrink-0">
                 <h2 className="text-xs font-extrabold tracking-wider text-white">
                   INCIDENT INVESTIGATOR ACTIVE
                 </h2>
-                <p className="text-[10px] text-[#8F9CAE] mt-1 leading-relaxed">
+                <p className="text-[10px] text-[#94A3B8] mt-1 leading-relaxed">
                   Ask questions about system threats (e.g. <i>&quot;Is 8.8.8.8 safe?&quot;</i>). The AI Agent will dynamically invoke your stdio MCP tools.
                 </p>
               </div>

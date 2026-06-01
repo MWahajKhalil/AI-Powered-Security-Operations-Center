@@ -2,124 +2,112 @@
 
 /* ============================================================================
    AI-POWERED SOC DASHBOARD DESIGN SYSTEM (VANILLA CSS)
-   Theme: Cyberpunk Obsidian Glassmorphism
+   Theme: Professional Corporate Enterprise SaaS (Dark Mode)
    ============================================================================ */
 
 :root {
-  /* Colors */
-  --bg-obsidian: #080C14;
-  --bg-card: rgba(17, 25, 40, 0.65);
-  --bg-panel: rgba(13, 20, 32, 0.85);
+  /* Matte Slate & Deep Obsidian Colors */
+  --bg-obsidian: #0A0C10;
+  --bg-card: rgba(16, 20, 28, 0.85);
+  --bg-panel: rgba(12, 15, 22, 0.95);
   
-  --color-cyan: #00F2FE;
-  --color-purple: #7F00FF;
-  --color-magenta: #FF007F;
-  --color-emerald: #00F5A0;
-  --color-crimson: #FF0055;
-  --color-amber: #FFB300;
+  /* Highly Curated Professional Accents */
+  --color-cyan: #0EA5E9;       /* Corporate Blue/Sky */
+  --color-purple: #6366F1;     /* Corporate Indigo */
+  --color-magenta: #EC4899;    /* Refined Pink/Magenta */
+  --color-emerald: #10B981;    /* Professional Green (Success) */
+  --color-crimson: #EF4444;    /* Professional Red (Danger) */
+  --color-amber: #F59E0B;      /* Professional Yellow (Warning) */
   
-  --text-muted: #8F9CAE;
-  
-  /* Borders & Glows */
-  --border-glass: 1px solid rgba(255, 255, 255, 0.08);
-  --border-glow-cyan: 1px solid rgba(0, 242, 254, 0.25);
-  --shadow-cyan: 0 8px 32px 0 rgba(0, 242, 254, 0.08);
-  --shadow-magenta: 0 8px 32px 0 rgba(255, 0, 127, 0.08);
+  --text-muted: #94A3B8;       /* Slate 400 */
+  --border-muted: rgba(255, 255, 255, 0.06);
+  --border-focus: rgba(14, 165, 233, 0.4);
 }
 
-/* Base Resets & Typography */
+/* Base Body Styles */
 body {
   background-color: var(--bg-obsidian) !important;
-  color: #FFFFFF !important;
+  color: #F8FAFC !important;   /* Slate 50 */
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Custom Sleek Scrollbars */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(8, 12, 20, 0.5);
+  background: rgba(10, 12, 16, 0.5);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 242, 254, 0.15);
-  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 242, 254, 0.4);
+  background: rgba(14, 165, 233, 0.3);
 }
 
 /* ============================================================================
-   GLASSMORPHISM & CYBER UTILITIES
+   ENTERPRISE CONTAINER STYLES (NO GIMMICKS)
    ============================================================================ */
 
 .glass-card {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: var(--border-glass);
-  border-radius: 12px;
-  box-shadow: var(--shadow-cyan);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  border: 1px solid var(--border-muted);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.35);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .glass-card:hover {
-  transform: translateY(-2px);
-  border: 1px solid rgba(0, 242, 254, 0.3);
-  box-shadow: 0 12px 40px 0 rgba(0, 242, 254, 0.15);
+  border-color: rgba(14, 165, 233, 0.2);
+  box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.5);
 }
 
 .glass-panel {
   background: var(--bg-panel);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: var(--border-glass);
-  border-radius: 16px;
+  border: 1px solid var(--border-muted);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5);
 }
 
-/* Neon Text & Outline Glows */
+/* Elegant Text Shadows for Indicators */
 .glow-text-cyan {
   color: var(--color-cyan);
-  text-shadow: 0 0 10px rgba(0, 242, 254, 0.5);
+  text-shadow: 0 0 8px rgba(14, 165, 233, 0.3);
 }
 
 .glow-text-magenta {
   color: var(--color-magenta);
-  text-shadow: 0 0 10px rgba(255, 0, 127, 0.5);
+  text-shadow: 0 0 8px rgba(236, 72, 153, 0.3);
 }
 
 .glow-text-emerald {
   color: var(--color-emerald);
-  text-shadow: 0 0 10px rgba(0, 245, 160, 0.4);
+  text-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
 .glow-text-crimson {
   color: var(--color-crimson);
-  text-shadow: 0 0 10px rgba(FF, 0, 85, 0.4);
-}
-
-.glow-border-cyan {
-  border: var(--border-glow-cyan);
-  box-shadow: 0 0 8px 0 rgba(0, 242, 254, 0.15);
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
 }
 
 /* ============================================================================
-   DYNAMIC MICRO-ANIMATIONS
+   MICRO-ANIMATIONS
    ============================================================================ */
 
 @keyframes pulse-glow-cyan {
   0%, 100% {
-    opacity: 0.6;
-    box-shadow: 0 0 8px 0 rgba(0, 242, 254, 0.15);
+    opacity: 0.8;
   }
   50% {
     opacity: 1;
-    box-shadow: 0 0 16px 2px rgba(0, 242, 254, 0.35);
+    text-shadow: 0 0 12px rgba(14, 165, 233, 0.5);
   }
 }
 
@@ -130,7 +118,7 @@ body {
 @keyframes fade-in-up {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -139,21 +127,21 @@ body {
 }
 
 .fade-in {
-  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fade-in-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* Loading Wave Spinner */
 .wave-container {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .wave-bar {
-  width: 3px;
-  height: 12px;
+  width: 2.5px;
+  height: 10px;
   background: var(--color-cyan);
-  border-radius: 1.5px;
+  border-radius: 1px;
   animation: wave-animation 1.2s ease-in-out infinite;
 }
 
@@ -163,59 +151,5 @@ body {
 
 @keyframes wave-animation {
   0%, 100% { transform: scaleY(1); }
-  50% { transform: scaleY(2.2); }
-}
-
-/* Holographic HUD Scanner Beam */
-@keyframes scan-beam {
-  0% { transform: translateY(-100%); }
-  50% { transform: translateY(100vh); }
-  100% { transform: translateY(-100%); }
-}
-
-.hud-scanner {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--color-cyan), transparent);
-  opacity: 0.15;
-  pointer-events: none;
-  z-index: 100;
-  animation: scan-beam 8s infinite linear;
-}
-
-/* Futuristic Sci-Fi HUD Bracket Decorators */
-.cyber-card {
-  position: relative;
-}
-
-.cyber-card::before, .cyber-card::after {
-  content: "";
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border-color: var(--color-cyan);
-  border-style: solid;
-  pointer-events: none;
-  opacity: 0.3;
-  transition: opacity 0.3s ease, border-color 0.3s ease;
-}
-
-.cyber-card::before {
-  top: -1px;
-  left: -1px;
-  border-width: 1px 0 0 1px;
-}
-
-.cyber-card::after {
-  bottom: -1px;
-  right: -1px;
-  border-width: 0 1px 1px 0;
-}
-
-.cyber-card:hover::before, .cyber-card:hover::after {
-  opacity: 1;
-  border-color: var(--color-magenta);
+  50% { transform: scaleY(2); }
 }

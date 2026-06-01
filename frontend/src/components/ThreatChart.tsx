@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 export default function ThreatChart() {
   // Static timeline data representing last 7 days in the SOC Center
@@ -13,6 +13,11 @@ export default function ThreatChart() {
     { day: "Sat", scans: 110, blocked: 8,  risk: 20 },
     { day: "Sun", scans: 165, blocked: 14, risk: 30 }
   ];
+
+  // Interactive UI States
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [showScans, setShowScans] = useState<boolean>(true);
+  const [showRisk, setShowRisk] = useState<boolean>(true);
 
   // Chart configuration dimensions
   const width = 500;
@@ -28,9 +33,13 @@ export default function ThreatChart() {
   // Formulate the line path for the Risk Index curve
   const riskPath = data.map((d, i) => `${i === 0 ? "M" : "L"} ${getX(i)} ${getRiskY(d.risk)}`).join(" ");
 
+  // Spacing width for hover detection columns
+  const colWidth = (width - 2 * padding) / (data.length - 1);
+
   return (
-    <div className="glass-card cyber-card p-6 flex flex-col h-full border border-white/5 bg-[#0D1420]/45 min-h-[300px]">
-      <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-4">
+    <div className="glass-card p-6 flex flex-col h-full border border-white/5 bg-[#0D1420]/45 min-h-[300px] relative select-none">
+      {/* Header controls pane */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/5 pb-4 mb-4 flex-shrink-0">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-white">
             Threat Metrics Timeline
@@ -39,20 +48,36 @@ export default function ThreatChart() {
             Scan volumes & risk levels (7-Day Cycle)
           </p>
         </div>
-        <div className="flex gap-4 text-[9px] text-[#8F9CAE] font-semibold">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded bg-gradient-to-t from-[#00F2FE]/40 to-[#00F2FE]" />
+
+        {/* Legend Interactive Buttons */}
+        <div className="flex gap-2 text-[9px] text-[#8F9CAE] font-semibold">
+          <button
+            onClick={() => setShowScans(!showScans)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded border transition-all duration-200 cursor-pointer ${
+              showScans
+                ? "bg-[#0EA5E9]/10 text-[#0EA5E9] border-[#0EA5E9]/30"
+                : "bg-black/15 text-white/30 border-white/5 hover:text-white/50"
+            }`}
+          >
+            <span className={`h-2 w-2 rounded ${showScans ? "bg-[#0EA5E9]" : "bg-white/20"}`} />
             <span>Network Scans</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-[#FF007F] shadow-[0_0_6px_#FF007F]" />
+          </button>
+          <button
+            onClick={() => setShowRisk(!showRisk)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded border transition-all duration-200 cursor-pointer ${
+              showRisk
+                ? "bg-[#EC4899]/10 text-[#EC4899] border-[#EC4899]/30"
+                : "bg-black/15 text-white/30 border-white/5 hover:text-white/50"
+            }`}
+          >
+            <span className={`h-2 w-2 rounded-full ${showRisk ? "bg-[#EC4899]" : "bg-white/20"}`} />
             <span>Risk Index (%)</span>
-          </div>
+          </button>
         </div>
       </div>
 
       {/* SVG Canvas for Chart */}
-      <div className="flex-1 w-full flex items-center justify-center p-2 overflow-hidden">
+      <div className="flex-1 w-full flex items-center justify-center p-2 overflow-hidden relative">
         <svg 
           viewBox={`0 0 ${width} ${height}`} 
           className="w-full h-full max-h-[220px]"
@@ -61,16 +86,16 @@ export default function ThreatChart() {
           {/* Gradients declarations */}
           <defs>
             <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#00F2FE" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#7F00FF" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#0EA5E9" stopOpacity="0.85" />
+              <stop offset="100%" stopColor="#6366F1" stopOpacity="0.1" />
             </linearGradient>
             <linearGradient id="lineGlow" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#FF007F" />
-              <stop offset="50%" stopColor="#7F00FF" />
-              <stop offset="100%" stopColor="#00F2FE" />
+              <stop offset="0%" stopColor="#EC4899" />
+              <stop offset="50%" stopColor="#6366F1" />
+              <stop offset="100%" stopColor="#0EA5E9" />
             </linearGradient>
             <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="4" result="blur" />
+              <feGaussianBlur stdDeviation="3" result="blur" />
               <feComposite in="SourceGraphic" in2="blur" operator="over" />
             </filter>
           </defs>
@@ -92,15 +117,30 @@ export default function ThreatChart() {
             );
           })}
 
+          {/* Vertical Mouse Follower Guide Line */}
+          {hoveredIndex !== null && (
+            <line
+              x1={getX(hoveredIndex)}
+              y1={padding - 5}
+              x2={getX(hoveredIndex)}
+              y2={height - padding + 5}
+              stroke="rgba(14, 165, 233, 0.25)"
+              strokeDasharray="2 2"
+              strokeWidth={1.5}
+              pointerEvents="none"
+            />
+          )}
+
           {/* Bars representation (Scans Volume) */}
-          {data.map((d, index) => {
+          {showScans && data.map((d, index) => {
             const x = getX(index);
             const y = getY(d.scans);
             const barWidth = 14;
             const barHeight = height - padding - y;
+            const isHovered = hoveredIndex === index;
 
             return (
-              <g key={index} className="group cursor-pointer">
+              <g key={index} className="group">
                 {/* Visual glow backdrop for active values */}
                 <rect 
                   x={x - barWidth / 2} 
@@ -109,6 +149,10 @@ export default function ThreatChart() {
                   height={barHeight} 
                   fill="url(#barGrad)" 
                   rx={3}
+                  className="transition-all duration-200"
+                  style={{
+                    opacity: hoveredIndex !== null && !isHovered ? 0.35 : 1,
+                  }}
                 />
                 {/* Thin top cap glowing line */}
                 <line 
@@ -116,41 +160,63 @@ export default function ThreatChart() {
                   y1={y} 
                   x2={x + barWidth / 2} 
                   y2={y} 
-                  stroke="#00F2FE" 
+                  stroke="#0EA5E9" 
                   strokeWidth={2}
-                  className="opacity-70 group-hover:opacity-100 transition-opacity"
+                  className="transition-opacity duration-200"
+                  style={{
+                    opacity: isHovered ? 1 : 0.6,
+                  }}
                 />
               </g>
             );
           })}
 
           {/* Glowing spline curve (Threat Risk Line) */}
-          <path 
-            d={riskPath} 
-            stroke="url(#lineGlow)" 
-            strokeWidth={3} 
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            filter="url(#glowEffect)"
-            className="opacity-90"
-          />
+          {showRisk && (
+            <>
+              <path 
+                d={riskPath} 
+                stroke="url(#lineGlow)" 
+                strokeWidth={3} 
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#glowEffect)"
+                className="transition-opacity duration-200"
+                style={{
+                  opacity: hoveredIndex !== null ? 0.4 : 0.9,
+                }}
+              />
+              <path 
+                d={riskPath} 
+                stroke="url(#lineGlow)" 
+                strokeWidth={2.5} 
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="opacity-100"
+              />
+            </>
+          )}
 
           {/* Data Points on Risk Spline */}
-          {data.map((d, index) => {
+          {showRisk && data.map((d, index) => {
             const x = getX(index);
             const y = getRiskY(d.risk);
+            const isHovered = hoveredIndex === index;
 
             return (
               <circle 
                 key={index}
                 cx={x}
                 cy={y}
-                r={4}
-                fill="#FF007F"
+                r={isHovered ? 5.5 : 4}
+                fill="#EC4899"
                 stroke="#FFFFFF"
-                strokeWidth={1.5}
-                filter="url(#glowEffect)"
-                className="cursor-pointer hover:scale-125 transition-transform"
+                strokeWidth={isHovered ? 2 : 1.5}
+                filter={isHovered ? "url(#glowEffect)" : ""}
+                className="transition-all duration-200"
+                style={{
+                  opacity: hoveredIndex !== null && !isHovered ? 0.35 : 1,
+                }}
               />
             );
           })}
@@ -158,26 +224,84 @@ export default function ThreatChart() {
           {/* X Axis Labels */}
           {data.map((d, index) => {
             const x = getX(index);
+            const isHovered = hoveredIndex === index;
             return (
               <text 
                 key={index} 
                 x={x} 
                 y={height - 8} 
-                fill="#8F9CAE" 
+                fill={isHovered ? "#F8FAFC" : "#8F9CAE"} 
                 fontSize={9} 
                 fontFamily="var(--font-inter)"
                 fontWeight="bold"
                 textAnchor="middle"
-                opacity={0.6}
+                className="transition-all duration-200"
+                style={{
+                  opacity: isHovered ? 1 : 0.6,
+                }}
               >
                 {d.day}
               </text>
             );
           })}
+
+          {/* Invisible rect columns to capture mouse hover continuously */}
+          {data.map((_, index) => {
+            return (
+              <rect
+                key={`trigger-${index}`}
+                x={getX(index) - colWidth / 2}
+                y={padding}
+                width={colWidth}
+                height={height - 2 * padding}
+                fill="transparent"
+                className="cursor-crosshair"
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseMove={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              />
+            );
+          })}
         </svg>
+
+        {/* Floating coordinates Tooltip absolute positioned relative to container */}
+        {hoveredIndex !== null && (
+          <div 
+            className="absolute bg-[#0C0E14]/95 backdrop-blur-md border border-white/10 rounded-lg p-2.5 shadow-2xl text-[10px] text-slate-300 pointer-events-none z-30 transition-all duration-100 ease-out flex flex-col gap-1 min-w-[120px]"
+            style={{
+              left: `${(getX(hoveredIndex) / width) * 100}%`,
+              top: "40%",
+              transform: "translate(-50%, -100%)",
+            }}
+          >
+            <div className="font-extrabold text-white text-[9px] uppercase tracking-wider border-b border-white/5 pb-1 flex justify-between items-center gap-2">
+              <span>{data[hoveredIndex].day} System Metrics</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-[#0EA5E9] animate-pulse" />
+            </div>
+            
+            {showScans && (
+              <div className="flex items-center justify-between gap-4 mt-0.5">
+                <span className="text-[#8F9CAE]">Inbound Scans:</span>
+                <span className="font-mono font-bold text-[#0EA5E9]">{data[hoveredIndex].scans}</span>
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[#8F9CAE]">Blocked Hits:</span>
+              <span className="font-mono font-bold text-[#F59E0B]">{data[hoveredIndex].blocked}</span>
+            </div>
+
+            {showRisk && (
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[#8F9CAE]">Threat Index:</span>
+                <span className="font-mono font-bold text-[#EC4899]">{data[hoveredIndex].risk}%</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="border-t border-white/5 pt-3.5 mt-4 text-[9px] text-[#8F9CAE] flex justify-between items-center">
+      <div className="border-t border-white/5 pt-3.5 mt-4 text-[9px] text-[#8F9CAE] flex justify-between items-center flex-shrink-0">
         <span>SENSOR STATUS: NORMAL SCAN RATES</span>
         <span>RADAR OVERVIEW STABLE</span>
       </div>
