@@ -54,7 +54,7 @@ export default function AuditTerminal() {
   }, [logs]);
 
   return (
-    <div className="h-full w-full bg-[#05080C] border border-white/5 rounded-lg flex flex-col font-mono shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden">
+    <div className="h-full w-full bg-[#05080C] border border-white/5 rounded-lg flex flex-col font-mono shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden cyber-card">
       {/* Terminal Title Bar */}
       <div className="bg-[#0C121A] px-4 py-2 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-2">

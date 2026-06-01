@@ -101,7 +101,7 @@ export default function ThreatIntelChat() {
   };
 
   return (
-    <div className="glass-panel flex flex-col h-full overflow-hidden border border-white/5 bg-[#0D1420]/25">
+    <div className="glass-panel flex flex-col h-full overflow-hidden border border-white/5 bg-[#0D1420]/25 cyber-card">
       {/* Dialogue Stream Container */}
       <div className="flex-1 p-5 overflow-y-auto space-y-5 text-xs">
         {messages.map((msg, index) => {

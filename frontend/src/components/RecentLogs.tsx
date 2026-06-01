@@ -50,7 +50,7 @@ export default function RecentLogs() {
   }, []);
 
   return (
-    <div className="glass-card p-6 flex flex-col h-full border border-white/5 bg-[#0D1420]/45 min-h-[300px]">
+    <div className="glass-card cyber-card p-6 flex flex-col h-full border border-white/5 bg-[#0D1420]/45 min-h-[300px]">
       <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-4">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-white">

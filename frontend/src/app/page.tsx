@@ -8,27 +8,32 @@ import RecentLogs from "@/components/RecentLogs";
 import ThreatChart from "@/components/ThreatChart";
 import AuditTerminal from "@/components/AuditTerminal";
 import ThreatIntelChat from "@/components/ThreatIntelChat";
+import CyberGridBackground from "@/components/CyberGridBackground";
 
 export default function Home() {
   const [activeView, setActiveView] = useState<"dashboard" | "chat">("dashboard");
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#080C14] text-white">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#080C14] text-white relative">
+      {/* 0. Sci-Fi Holographic Visual HUD Overlays */}
+      <CyberGridBackground />
+      <div className="hud-scanner" />
+
       {/* 1. Sidebar Left Dock */}
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
       {/* 2. Content Area Right */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-full overflow-hidden z-10">
         {/* Top Control Header */}
         <Header activeView={activeView} />
 
         {/* Dynamic Content Pane */}
-        <main className="flex-1 overflow-y-auto p-6 bg-[#080C14] relative">
+        <main className="flex-1 overflow-y-auto p-6 bg-[#080C14]/40 relative">
           {/* Dashboard View */}
           {activeView === "dashboard" && (
             <div className="flex flex-col gap-6 fade-in">
               {/* Glass Header Info Card */}
-              <div className="glass-card p-6 border-l-4 border-l-[#00F2FE]">
+              <div className="glass-card cyber-card p-6 border-l-4 border-l-[#00F2FE]">
                 <h2 className="text-sm font-extrabold tracking-wider text-white">
                   SOC COMMAND OVERVIEW DECK
                 </h2>
@@ -86,7 +91,7 @@ export default function Home() {
           {activeView === "chat" && (
             <div className="h-[calc(100vh-120px)] flex flex-col gap-6 fade-in overflow-hidden">
               {/* Top Banner Info */}
-              <div className="glass-card p-4 border-l-4 border-l-[#7F00FF] bg-[#0D1420]/45 flex-shrink-0">
+              <div className="glass-card cyber-card p-4 border-l-4 border-l-[#7F00FF] bg-[#0D1420]/45 flex-shrink-0">
                 <h2 className="text-xs font-extrabold tracking-wider text-white">
                   INCIDENT INVESTIGATOR ACTIVE
                 </h2>
