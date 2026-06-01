@@ -54,15 +54,15 @@ export default function AuditTerminal() {
   }, [logs]);
 
   return (
-    <div className="h-full w-full bg-[#05080C] border border-white/5 rounded-lg flex flex-col font-mono shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden cyber-card">
+    <div className="h-full w-full bg-[var(--bg-terminal)] border border-[var(--border-muted)] rounded-lg flex flex-col font-mono shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-300">
       {/* Terminal Title Bar */}
-      <div className="bg-[#0C121A] px-4 py-2 border-b border-white/5 flex items-center justify-between">
+      <div className="bg-[var(--bg-panel)] px-4 py-2 border-b border-[var(--border-muted)] flex items-center justify-between transition-colors duration-300">
         <div className="flex items-center gap-2">
           {/* Mac style control bullets */}
           <span className="h-2.5 w-2.5 rounded-full bg-[#FF0055]/70" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#FFB300]/70" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#00F5A0]/70" />
-          <span className="text-[10px] text-[#8F9CAE] ml-2 tracking-wider font-bold">
+          <span className="text-[10px] text-[var(--text-muted)] ml-2 tracking-wider font-bold transition-colors duration-300">
             SECURE AUDIT TERMINAL v1.0.0
           </span>
         </div>
@@ -75,7 +75,7 @@ export default function AuditTerminal() {
       {/* Terminal Monospace Stream Content */}
       <div className="flex-1 p-4 overflow-y-auto space-y-4 text-xs leading-relaxed text-[#00F5A0] selection:bg-[#00F5A0]/20 selection:text-white">
         {/* Startup banner */}
-        <div className="text-white/40 border-b border-white/5 pb-2 mb-2 text-[10px]">
+        <div className="text-white/40 border-b border-[var(--border-muted)] pb-2 mb-2 text-[10px] transition-colors duration-300">
           <div>============================================================</div>
           <div>SOC TERMINAL: LISTENING ON StdIO JSON-RPC INGRESS STREAMS</div>
           <div>DAEMON PID: 12576 | SQLite AUDITING TARGET ACTIVE</div>

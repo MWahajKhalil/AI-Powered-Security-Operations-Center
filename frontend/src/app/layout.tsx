@@ -22,10 +22,9 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#0B0F19] text-white antialiased">
+      <body className="min-h-full flex flex-col bg-[var(--bg-obsidian)] text-[var(--text-primary)] transition-colors duration-300 antialiased">
         {children}
       </body>
     </html>
   );
 }
-

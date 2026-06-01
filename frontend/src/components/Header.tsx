@@ -15,6 +15,36 @@ export default function Header({ activeView }: HeaderProps) {
   const [ping, setPing] = useState<number>(12);
   const [isScanning, setIsScanning] = useState<boolean>(false);
 
+  // Theme states
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    // Read saved theme from localStorage on load
+    const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      if (savedTheme === "light") {
+        document.documentElement.classList.add("light-mode");
+      } else {
+        document.documentElement.classList.remove("light-mode");
+      }
+    } else {
+      // Default to dark mode
+      document.documentElement.classList.remove("light-mode");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "dark" ? "light" : "dark";
+    setTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+    if (nextTheme === "light") {
+      document.documentElement.classList.add("light-mode");
+    } else {
+      document.documentElement.classList.remove("light-mode");
+    }
+  };
+
   useEffect(() => {
     const checkHealth = async () => {
       try {
@@ -88,15 +118,15 @@ export default function Header({ activeView }: HeaderProps) {
   };
 
   return (
-    <header className="h-16 bg-[#0D1420]/40 backdrop-blur-md border-b border-white/5 px-6 flex items-center justify-between z-10 select-none flex-shrink-0">
+    <header className="h-16 bg-[var(--bg-panel)] border-b border-[var(--border-muted)] px-6 flex items-center justify-between z-10 select-none flex-shrink-0 transition-colors duration-300">
       {/* Title Area */}
       <div>
-        <h1 className="text-sm font-bold tracking-wider text-white">
+        <h1 className="text-sm font-bold tracking-wider text-[var(--text-primary)] transition-colors duration-300">
           {activeView === "dashboard"
             ? "THREAT INGRESS OPERATIONS OVERVIEW"
             : "INCIDENT INVESTIGATION COMMAND CENTER"}
         </h1>
-        <p className="text-[9px] text-[#8F9CAE] uppercase tracking-widest mt-0.5">
+        <p className="text-[9px] text-[var(--text-muted)] uppercase tracking-widest mt-0.5 transition-colors duration-300">
           Real-Time Security Intelligence
         </p>
       </div>
@@ -108,30 +138,49 @@ export default function Header({ activeView }: HeaderProps) {
         <div className="hidden md:flex items-center gap-5 text-[10px]">
           {/* CPU Spark */}
           <div className="flex flex-col items-end">
-            <span className="text-[8px] text-[#8F9CAE] uppercase tracking-widest font-semibold">CPU INGRESS</span>
-            <span className="font-mono font-bold text-white mt-0.5 text-[10px]">{cpu}%</span>
+            <span className="text-[8px] text-[var(--text-muted)] uppercase tracking-widest font-semibold transition-colors duration-300">CPU INGRESS</span>
+            <span className="font-mono font-bold text-[var(--text-primary)] mt-0.5 text-[10px] transition-colors duration-300">{cpu}%</span>
           </div>
 
-          <div className="h-6 w-px bg-white/5" />
+          <div className="h-6 w-px bg-[var(--border-muted)] transition-colors duration-300" />
 
           {/* Memory Spark */}
           <div className="flex flex-col items-end">
-            <span className="text-[8px] text-[#8F9CAE] uppercase tracking-widest font-semibold">RAM TARGET</span>
-            <span className="font-mono font-semibold text-white mt-0.5 text-[10px]">{memory}MB / 2048MB</span>
+            <span className="text-[8px] text-[var(--text-muted)] uppercase tracking-widest font-semibold transition-colors duration-300">RAM TARGET</span>
+            <span className="font-mono font-semibold text-[var(--text-primary)] mt-0.5 text-[10px] transition-colors duration-300">{memory}MB / 2048MB</span>
           </div>
 
-          <div className="h-6 w-px bg-white/5" />
+          <div className="h-6 w-px bg-[var(--border-muted)] transition-colors duration-300" />
 
           {/* Sync Latency Spark */}
           <div className="flex flex-col items-end">
-            <span className="text-[8px] text-[#8F9CAE] uppercase tracking-widest font-semibold">SYNC RTT</span>
-            <span className={`font-mono font-bold mt-0.5 text-[10px] ${backendOnline ? "text-[#0EA5E9]" : "text-white/30"}`}>
+            <span className="text-[8px] text-[var(--text-muted)] uppercase tracking-widest font-semibold transition-colors duration-300">SYNC RTT</span>
+            <span className={`font-mono font-bold mt-0.5 text-[10px] transition-colors duration-300 ${backendOnline ? "text-[#0EA5E9]" : "text-[var(--text-muted)]/40"}`}>
               {backendOnline ? `${ping}ms` : "N/A"}
             </span>
           </div>
         </div>
 
-        <div className="hidden md:block h-6 w-px bg-white/5" />
+        <div className="hidden md:block h-6 w-px bg-[var(--border-muted)] transition-colors duration-300" />
+
+        {/* Sun/Moon Theme Toggle Switch */}
+        <button
+          onClick={toggleTheme}
+          className="p-1.5 rounded-lg border border-[var(--border-muted)] bg-[var(--bg-obsidian)]/20 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all cursor-pointer flex items-center justify-center min-w-8 h-8 hover:bg-[var(--bg-obsidian)]/40"
+          title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
+        >
+          {theme === "dark" ? (
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          ) : (
+            <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
+            </svg>
+          )}
+        </button>
+
+        <div className="h-6 w-px bg-[var(--border-muted)] transition-colors duration-300" />
 
         {/* Run Manual Security Scan Button */}
         <button
@@ -147,10 +196,10 @@ export default function Header({ activeView }: HeaderProps) {
           <span>{isScanning ? "Checking..." : "Run Security Scan"}</span>
         </button>
 
-        <div className="h-6 w-px bg-white/5" />
+        <div className="h-6 w-px bg-[var(--border-muted)] transition-colors duration-300" />
 
         {/* FastAPI Status Light */}
-        <div className="flex items-center gap-2 p-1.5 px-3 rounded-full bg-white/2 border border-white/5 text-[9px] font-bold uppercase tracking-wider">
+        <div className="flex items-center gap-2 p-1.5 px-3 rounded-full bg-[var(--bg-obsidian)]/20 border border-[var(--border-muted)] text-[9px] font-bold uppercase tracking-wider transition-colors duration-300">
           {backendOnline === null ? (
             <>
               <span className="h-1.5 w-1.5 rounded-full bg-[#F59E0B] animate-pulse" />

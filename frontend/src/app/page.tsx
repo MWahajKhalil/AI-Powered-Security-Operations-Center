@@ -13,7 +13,7 @@ export default function Home() {
   const [activeView, setActiveView] = useState<"dashboard" | "chat">("dashboard");
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#0A0C10] text-[#F8FAFC] relative">
+    <div className="flex h-screen w-screen overflow-hidden bg-[var(--bg-obsidian)] text-[var(--text-primary)] relative transition-colors duration-300">
       {/* 1. Sidebar Left Dock */}
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
@@ -23,16 +23,16 @@ export default function Home() {
         <Header activeView={activeView} />
 
         {/* Dynamic Content Pane */}
-        <main className="flex-1 overflow-y-auto p-6 bg-[#0A0C10] relative">
+        <main className="flex-1 overflow-y-auto p-6 bg-[var(--bg-obsidian)] relative transition-colors duration-300">
           {/* Dashboard View */}
           {activeView === "dashboard" && (
             <div className="flex flex-col gap-6 fade-in">
               {/* Glass Header Info Card */}
-              <div className="glass-card p-6 border-l-4 border-l-[#0EA5E9] bg-slate-900/10">
-                <h2 className="text-sm font-extrabold tracking-wider text-white">
+              <div className="glass-card p-6 border-l-4 border-l-[#0EA5E9] bg-slate-500/5">
+                <h2 className="text-sm font-extrabold tracking-wider text-[var(--text-primary)] transition-colors duration-300">
                   SOC COMMAND OVERVIEW DECK
                 </h2>
-                <p className="text-[11px] text-[#8F9CAE] mt-1.5 leading-relaxed max-w-2xl">
+                <p className="text-[11px] text-[var(--text-muted)] mt-1.5 leading-relaxed max-w-2xl transition-colors duration-300">
                   Unified control deck of the security network client. The Model Context Protocol layers are listening on background stdio channels. Switch to **Threat Hunt** to test real-time AI investigations.
                 </p>
               </div>
@@ -86,11 +86,11 @@ export default function Home() {
           {activeView === "chat" && (
             <div className="h-[calc(100vh-120px)] flex flex-col gap-6 fade-in overflow-hidden">
               {/* Top Banner Info */}
-              <div className="glass-card p-4 border-l-4 border-l-[#6366F1] bg-slate-900/10 flex-shrink-0">
-                <h2 className="text-xs font-extrabold tracking-wider text-white">
+              <div className="glass-card p-4 border-l-4 border-l-[#6366F1] bg-slate-500/5 flex-shrink-0">
+                <h2 className="text-xs font-extrabold tracking-wider text-[var(--text-primary)] transition-colors duration-300">
                   INCIDENT INVESTIGATOR ACTIVE
                 </h2>
-                <p className="text-[10px] text-[#94A3B8] mt-1 leading-relaxed">
+                <p className="text-[10px] text-[var(--text-muted)] mt-1 leading-relaxed transition-colors duration-300">
                   Ask questions about system threats (e.g. <i>&quot;Is 8.8.8.8 safe?&quot;</i>). The AI Agent will dynamically invoke your stdio MCP tools.
                 </p>
               </div>

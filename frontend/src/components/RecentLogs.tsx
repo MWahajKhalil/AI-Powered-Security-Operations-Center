@@ -60,13 +60,13 @@ export default function RecentLogs() {
   });
 
   return (
-    <div className="glass-card p-6 flex flex-col h-full border border-white/5 bg-[#0D1420]/45 min-h-[300px]">
-      <div className="flex justify-between items-center border-b border-white/5 pb-4 mb-4">
+    <div className="glass-card p-6 flex flex-col h-full min-h-[300px] transition-all duration-300 select-none">
+      <div className="flex justify-between items-center border-b border-[var(--border-muted)] pb-4 mb-4 transition-colors duration-300">
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider text-white">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] transition-colors duration-300">
             Sensor Audit Logs Stream
           </h3>
-          <p className="text-[10px] text-[#8F9CAE] mt-0.5 uppercase tracking-widest">
+          <p className="text-[10px] text-[var(--text-muted)] mt-0.5 uppercase tracking-widest transition-colors duration-300">
             Real-time SQLite transaction feed
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function RecentLogs() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Filter logs (e.g. ping, 8.8.8.8)..."
-          className="flex-1 bg-black/25 border border-white/5 rounded-lg px-3 py-1.5 text-[10px] placeholder:text-white/20 text-white outline-none focus:border-[#0EA5E9]/40 transition-colors"
+          className="flex-1 bg-[var(--bg-obsidian)]/30 border border-[var(--border-muted)] rounded-lg px-3 py-1.5 text-[10px] placeholder:text-[var(--text-muted)]/40 text-[var(--text-primary)] outline-none focus:border-[#0EA5E9]/40 transition-all duration-300"
         />
         <div className="flex items-center gap-1.5">
           <button
@@ -91,7 +91,7 @@ export default function RecentLogs() {
             className={`px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer ${
               statusFilter === "all"
                 ? "bg-[#0EA5E9]/10 text-[#0EA5E9] border border-[#0EA5E9]/30"
-                : "bg-black/15 text-white/55 border border-white/5 hover:text-white"
+                : "bg-[var(--bg-obsidian)]/20 text-[var(--text-muted)] border border-[var(--border-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             All ({logs.length})
@@ -101,7 +101,7 @@ export default function RecentLogs() {
             className={`px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1 ${
               statusFilter === "success"
                 ? "bg-[#10B981]/10 text-[#10B981] border border-[#10B981]/30"
-                : "bg-black/15 text-white/55 border border-white/5 hover:text-white"
+                : "bg-[var(--bg-obsidian)]/20 text-[var(--text-muted)] border border-[var(--border-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             <span className="h-1 w-1 rounded-full bg-[#10B981]" />
@@ -112,7 +112,7 @@ export default function RecentLogs() {
             className={`px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-all duration-200 cursor-pointer flex items-center gap-1 ${
               statusFilter === "failure"
                 ? "bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/30"
-                : "bg-black/15 text-white/55 border border-white/5 hover:text-white"
+                : "bg-[var(--bg-obsidian)]/20 text-[var(--text-muted)] border border-[var(--border-muted)] hover:text-[var(--text-primary)]"
             }`}
           >
             <span className="h-1 w-1 rounded-full bg-[#EF4444]" />
@@ -124,7 +124,7 @@ export default function RecentLogs() {
       {/* Main Logs Stream Container */}
       <div className="flex-1 overflow-y-auto space-y-3 max-h-[280px] pr-1 scroll-smooth">
         {loading ? (
-          <div className="h-full flex flex-col items-center justify-center text-xs text-[#8F9CAE] py-12 gap-3">
+          <div className="h-full flex flex-col items-center justify-center text-xs text-[var(--text-muted)] py-12 gap-3 transition-colors duration-300">
             <div className="wave-container">
               <div className="wave-bar" />
               <div className="wave-bar" />
@@ -134,20 +134,20 @@ export default function RecentLogs() {
             <span>Reading Audit Databases...</span>
           </div>
         ) : error ? (
-          <div className="h-full flex flex-col items-center justify-center text-xs text-[#8F9CAE] py-12 text-center">
+          <div className="h-full flex flex-col items-center justify-center text-xs text-[var(--text-muted)] py-12 text-center transition-colors duration-300">
             <span className="h-2 w-2 rounded-full bg-[#EF4444] shadow-[0_0_8px_#EF4444] mb-2" />
-            <span className="font-semibold text-white/90">{error}</span>
-            <p className="text-[9px] text-[#8F9CAE]/60 mt-1 max-w-[200px]">
+            <span className="font-semibold text-[var(--text-primary)] transition-colors duration-300">{error}</span>
+            <p className="text-[9px] text-[var(--text-muted)]/60 mt-1 max-w-[200px] transition-colors duration-300">
               FastAPI backend is offline. Run uvicorn server on port 8000 to stream live scans.
             </p>
           </div>
         ) : filteredLogs.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-xs text-[#8F9CAE] py-12 text-center">
-            <svg className="h-8 w-8 text-white/10 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="h-full flex flex-col items-center justify-center text-xs text-[var(--text-muted)] py-12 text-center transition-colors duration-300">
+            <svg className="h-8 w-8 text-[var(--text-muted)]/20 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <span className="font-medium text-white/70">No matching logs found</span>
-            <p className="text-[9px] text-[#8F9CAE]/60 mt-1 max-w-[220px]">
+            <span className="font-medium text-[var(--text-primary)] transition-colors duration-300">No matching logs found</span>
+            <p className="text-[9px] text-[var(--text-muted)]/60 mt-1 max-w-[220px] transition-colors duration-300">
               Adjust your search text or status severity filters.
             </p>
           </div>
@@ -160,7 +160,7 @@ export default function RecentLogs() {
             return (
               <div 
                 key={index}
-                className="flex flex-col gap-2 p-3 bg-white/2 rounded-lg border border-white/5 hover:border-white/10 transition-colors duration-200 fade-in"
+                className="flex flex-col gap-2 p-3 bg-[var(--bg-obsidian)]/10 rounded-lg border border-[var(--border-muted)] hover:border-[var(--text-muted)]/20 transition-all duration-200 fade-in"
               >
                 {/* Header Row */}
                 <div className="flex justify-between items-center text-[10px]">
@@ -172,16 +172,16 @@ export default function RecentLogs() {
                         boxShadow: `0 0 6px ${isSuccess ? "var(--color-emerald)" : "var(--color-crimson)"}`
                       }}
                     />
-                    <span className="font-mono font-bold text-white/95">{log.tool_name}</span>
+                    <span className="font-mono font-bold text-[var(--text-primary)] transition-colors duration-300">{log.tool_name}</span>
                   </div>
-                  <div className="flex items-center gap-3 text-[#8F9CAE] font-mono text-[9px]">
+                  <div className="flex items-center gap-3 text-[var(--text-muted)] font-mono text-[9px] transition-colors duration-300">
                     <span>{log.execution_time_ms} ms</span>
                     <span>{timeStr}</span>
                   </div>
                 </div>
 
                 {/* Parameters and Result Block */}
-                <div className="bg-black/20 border border-white/5 rounded p-2 font-mono text-[9px] text-white/70 leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-24">
+                <div className="bg-[var(--bg-obsidian)]/30 border border-[var(--border-muted)] rounded p-2 font-mono text-[9px] text-[var(--text-primary)]/80 leading-relaxed overflow-x-auto whitespace-pre-wrap max-h-24 transition-all duration-300">
                   <div>
                     <span className="text-[#0EA5E9]">Args:</span> {JSON.stringify(log.arguments)}
                   </div>
@@ -198,7 +198,7 @@ export default function RecentLogs() {
         )}
       </div>
 
-      <div className="border-t border-white/5 pt-3.5 mt-4 text-[9px] text-[#8F9CAE] flex justify-between items-center">
+      <div className="border-t border-[var(--border-muted)] pt-3.5 mt-4 text-[9px] text-[var(--text-muted)] flex justify-between items-center transition-colors duration-300 flex-shrink-0">
         <span>SQLITE AUDITING: soc_dashboard.db</span>
         <span>STREAM FEED STABLE</span>
       </div>

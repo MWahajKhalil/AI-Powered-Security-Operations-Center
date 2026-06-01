@@ -2,15 +2,24 @@
 
 /* ============================================================================
    AI-POWERED SOC DASHBOARD DESIGN SYSTEM (VANILLA CSS)
-   Theme: Professional Corporate Enterprise SaaS (Dark Mode)
+   Theme: Professional Corporate Enterprise SaaS
+   Supports Light & Dark Modes
    ============================================================================ */
 
 :root {
-  /* Matte Slate & Deep Obsidian Colors */
+  /* Matte Slate & Deep Obsidian Colors (Dark Theme - Default) */
   --bg-obsidian: #0A0C10;
   --bg-card: rgba(16, 20, 28, 0.85);
   --bg-panel: rgba(12, 15, 22, 0.95);
   
+  --text-primary: #F8FAFC;     /* Slate 50 */
+  --text-secondary: #E2E8F0;   /* Slate 200 */
+  --text-muted: #94A3B8;       /* Slate 400 */
+  
+  --border-muted: rgba(255, 255, 255, 0.06);
+  --border-focus: rgba(14, 165, 233, 0.4);
+  --bg-terminal: #05080C;      /* Classic Dark Green-on-Black Terminal */
+
   /* Highly Curated Professional Accents */
   --color-cyan: #0EA5E9;       /* Corporate Blue/Sky */
   --color-purple: #6366F1;     /* Corporate Indigo */
@@ -18,19 +27,50 @@
   --color-emerald: #10B981;    /* Professional Green (Success) */
   --color-crimson: #EF4444;    /* Professional Red (Danger) */
   --color-amber: #F59E0B;      /* Professional Yellow (Warning) */
+}
+
+/* Light Theme Variables */
+:root.light-mode {
+  --bg-obsidian: #F1F5F9;      /* Ultra-premium soft slate background */
+  --bg-card: rgba(255, 255, 255, 0.95); /* Solid white card with subtle backdrop */
+  --bg-panel: #FFFFFF;         /* Solid white layout panels */
   
-  --text-muted: #94A3B8;       /* Slate 400 */
-  --border-muted: rgba(255, 255, 255, 0.06);
-  --border-focus: rgba(14, 165, 233, 0.4);
+  --text-primary: #0F172A;     /* Deep Slate 900 */
+  --text-secondary: #334155;   /* Slate 700 */
+  --text-muted: #64748B;       /* Slate 500 */
+  
+  --border-muted: rgba(15, 23, 42, 0.08); /* Clean grey contrast border */
+  --border-focus: rgba(14, 165, 233, 0.5);
+  --bg-terminal: #0B0F19;      /* Developer standard dark-slate console */
 }
 
 /* Base Body Styles */
 body {
   background-color: var(--bg-obsidian) !important;
-  color: #F8FAFC !important;   /* Slate 50 */
+  color: var(--text-primary) !important;
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Transition utility for theme shifting */
+body, 
+.glass-card, 
+.glass-panel, 
+header, 
+aside, 
+main, 
+input, 
+button, 
+span, 
+p, 
+h1, 
+h2, 
+h3, 
+h4, 
+svg {
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
 }
 
 /* Custom Sleek Scrollbars */
@@ -40,12 +80,20 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(10, 12, 16, 0.5);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.light-mode ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
 }
 
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 4px;
+}
+
+.light-mode ::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.1);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -61,12 +109,20 @@ body {
   border: 1px solid var(--border-muted);
   border-radius: 8px;
   box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.35);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.light-mode .glass-card {
+  box-shadow: 0 4px 20px 0 rgba(15, 23, 42, 0.04);
 }
 
 .glass-card:hover {
   border-color: rgba(14, 165, 233, 0.2);
   box-shadow: 0 8px 30px 0 rgba(0, 0, 0, 0.5);
+}
+
+.light-mode .glass-card:hover {
+  border-color: rgba(14, 165, 233, 0.25);
+  box-shadow: 0 8px 35px 0 rgba(15, 23, 42, 0.07);
 }
 
 .glass-panel {
@@ -76,10 +132,18 @@ body {
   box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.5);
 }
 
+.light-mode .glass-panel {
+  box-shadow: 0 10px 40px 0 rgba(15, 23, 42, 0.06);
+}
+
 /* Elegant Text Shadows for Indicators */
 .glow-text-cyan {
   color: var(--color-cyan);
   text-shadow: 0 0 8px rgba(14, 165, 233, 0.3);
+}
+
+.light-mode .glow-text-cyan {
+  text-shadow: none;
 }
 
 .glow-text-magenta {
@@ -87,14 +151,26 @@ body {
   text-shadow: 0 0 8px rgba(236, 72, 153, 0.3);
 }
 
+.light-mode .glow-text-magenta {
+  text-shadow: none;
+}
+
 .glow-text-emerald {
   color: var(--color-emerald);
   text-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
+.light-mode .glow-text-emerald {
+  text-shadow: none;
+}
+
 .glow-text-crimson {
   color: var(--color-crimson);
   text-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+}
+
+.light-mode .glow-text-crimson {
+  text-shadow: none;
 }
 
 /* ============================================================================
@@ -113,6 +189,11 @@ body {
 
 .pulse-glow-cyan {
   animation: pulse-glow-cyan 2.5s infinite ease-in-out;
+}
+
+.light-mode .pulse-glow-cyan {
+  animation: none;
+  opacity: 1;
 }
 
 @keyframes fade-in-up {
