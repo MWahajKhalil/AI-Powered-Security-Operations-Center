@@ -3,6 +3,9 @@
 import React, { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import StatusCard from "@/components/StatusCard";
+import RecentLogs from "@/components/RecentLogs";
+import ThreatChart from "@/components/ThreatChart";
 
 export default function Home() {
   const [activeView, setActiveView] = useState<"dashboard" | "chat">("dashboard");
@@ -21,80 +24,71 @@ export default function Home() {
         <main className="flex-1 overflow-y-auto p-6 bg-[#080C14] relative">
           {/* Dashboard View */}
           {activeView === "dashboard" && (
-            <div className="h-full flex flex-col gap-6 fade-in">
+            <div className="flex flex-col gap-6 fade-in">
               {/* Glass Header Info Card */}
               <div className="glass-card p-6 border-l-4 border-l-[#00F2FE]">
-                <h2 className="text-lg font-bold tracking-wider text-white">
-                  SOC OVERVIEW CONTROLLERS
+                <h2 className="text-sm font-extrabold tracking-wider text-white">
+                  SOC COMMAND OVERVIEW DECK
                 </h2>
-                <p className="text-xs text-[#8F9CAE] mt-1 leading-relaxed max-w-2xl">
-                  Welcome to Tier 2 Security Operations. The system has completed initialization. 
-                  Currently connecting to background MCP subprocesses. Use the sidebar to initiate a threat investigation hunt.
+                <p className="text-[11px] text-[#8F9CAE] mt-1.5 leading-relaxed max-w-2xl">
+                  Unified control deck of the security network client. The Model Context Protocol layers are listening on background stdio channels. Switch to **Threat Hunt** to test real-time AI investigations.
                 </p>
               </div>
 
-              {/* Grid Placeholder for Phase 10 Metrics */}
+              {/* Grid of Glowing Status Cards */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="glass-card p-6 border border-white/5 bg-white/2 min-h-[140px] flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-xs text-[#8F9CAE] uppercase tracking-wider">Severity Alert Score</h3>
-                    <p className="text-3xl font-extrabold text-[#FF0055] mt-2 glow-text-crimson">92.4</p>
-                  </div>
-                  <span className="text-[10px] text-white/50 tracking-wider">CRITICAL NET INTEL ACTIVE</span>
-                </div>
-                <div className="glass-card p-6 border border-white/5 bg-white/2 min-h-[140px] flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-xs text-[#8F9CAE] uppercase tracking-wider">Active Tool Sensors</h3>
-                    <p className="text-3xl font-extrabold text-[#00F2FE] mt-2 glow-text-cyan">2 Active</p>
-                  </div>
-                  <span className="text-[10px] text-white/50 tracking-wider">NETWORK & THREAT INTEL ONLINE</span>
-                </div>
-                <div className="glass-card p-6 border border-white/5 bg-white/2 min-h-[140px] flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-xs text-[#8F9CAE] uppercase tracking-wider">Audit Log Trace</h3>
-                    <p className="text-3xl font-extrabold text-[#00F5A0] mt-2 glow-text-emerald">Auditing On</p>
-                  </div>
-                  <span className="text-[10px] text-white/50 tracking-wider">SQLITE DATABASE SYNCD</span>
-                </div>
+                <StatusCard 
+                  title="Severity Alert Index" 
+                  value="92.4" 
+                  color="crimson" 
+                  statusText="Critical Alerts active"
+                  icon={
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  }
+                />
+                <StatusCard 
+                  title="Active Sensor Networks" 
+                  value="2 Connected" 
+                  color="cyan" 
+                  statusText="Net-Analysis & Threat-Intel"
+                  icon={
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  }
+                />
+                <StatusCard 
+                  title="Database Log Audits" 
+                  value="Online" 
+                  color="emerald" 
+                  statusText="SQLite Synced & listening"
+                  icon={
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                    </svg>
+                  }
+                />
               </div>
 
-              {/* Chart Placeholder for Phase 10 Radar */}
-              <div className="flex-1 glass-card p-6 min-h-[300px] flex flex-col justify-between border border-white/5 bg-[#0D1420]/45">
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-white">Active Sensor Matrix Radar</h3>
-                  <p className="text-[11px] text-[#8F9CAE] mt-1">Simulated metrics overview map for active SOC sensors.</p>
-                </div>
-                
-                {/* SVG Mock Radar Graphic */}
-                <div className="flex-1 flex items-center justify-center p-4">
-                  <div className="relative h-44 w-44 rounded-full border border-[#00F2FE]/20 flex items-center justify-center pulse-glow-cyan">
-                    <div className="h-28 w-28 rounded-full border border-[#00F2FE]/25 flex items-center justify-center">
-                      <div className="h-12 w-12 rounded-full border border-[#00F2FE]/30 flex items-center justify-center">
-                        <span className="h-2 w-2 rounded-full bg-[#00F2FE] shadow-[0_0_10px_#00F2FE]" />
-                      </div>
-                    </div>
-                    {/* Rotating sweeping sensor overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-[#00F2FE]/10 to-transparent rounded-full animate-spin [animation-duration:6s] pointer-events-none" />
-                  </div>
-                </div>
-
-                <div className="border-t border-white/5 pt-4 text-[10px] text-[#8F9CAE] flex justify-between items-center">
-                  <span>SYSTEM MATRIX STABLE</span>
-                  <span>PHASE 10 THREAT DASHBOARD COMPONENT ATTACHING NEXT</span>
-                </div>
+              {/* Data Visualization Pane: Spline Chart & SQLite Logs Feed */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <ThreatChart />
+                <RecentLogs />
               </div>
             </div>
           )}
 
-          {/* Chat / Investigation View */}
+          {/* Chat / Investigation View (Wired fully in Phase 11 & 12) */}
           {activeView === "chat" && (
             <div className="h-full flex flex-col gap-6 fade-in justify-between">
               {/* Top Banner */}
               <div className="glass-card p-6 border-l-4 border-l-[#7F00FF] bg-[#0D1420]/45">
-                <h2 className="text-lg font-bold tracking-wider text-white">
+                <h2 className="text-sm font-extrabold tracking-wider text-white">
                   INCIDENT INVESTIGATOR ACTIVE
                 </h2>
-                <p className="text-xs text-[#8F9CAE] mt-1 leading-relaxed max-w-2xl">
+                <p className="text-[11px] text-[#8F9CAE] mt-1.5 leading-relaxed max-w-2xl">
                   Ask the intelligence orchestrator questions about system threats (e.g. <i>&quot;Is the domain malicious-tracker.xyz clean?&quot;</i>). 
                   The agent will reason dynamically and execute registered MCP tools.
                 </p>
@@ -108,9 +102,9 @@ export default function Home() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </div>
-                  <h3 className="text-sm font-semibold tracking-wider text-white">Agent Dialogue Interface</h3>
-                  <p className="text-xs text-[#8F9CAE] mt-2 leading-relaxed">
-                    Ready to initiate investigation checks. Connection to the backend chatbot route will be fully wired in **Phase 12**.
+                  <h3 className="text-xs font-bold tracking-wider uppercase text-white">Agent Dialogue Interface</h3>
+                  <p className="text-[11px] text-[#8F9CAE] mt-2 leading-relaxed">
+                    Ready to initiate active checks. Connection to the backend chatbot route will be fully wired in **Phase 12**.
                   </p>
                 </div>
               </div>
