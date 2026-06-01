@@ -10,6 +10,7 @@ The goal of this phase was to establish the comprehensive directory layout for o
 
 ---
 
+---
 ## 2. Why it Matters
 
 In standard architectures, tools and prompt systems are often tightly coupled to the application code, making them hard to test, scale, or reuse. By decoupling the architecture at the directory level, we achieve:

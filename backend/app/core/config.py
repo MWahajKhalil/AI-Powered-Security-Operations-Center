@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
@@ -12,9 +13,12 @@ class Settings(BaseSettings):
     # Path to local SQLite database
     DATABASE_PATH: str = "/Users/mwahajkhalil/Learnings/MCP Project/database/soc_dashboard.db"
 
-    class Config:
+    GEMINI_API_KEY: Optional[str] = None
 
+    class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 settings = Settings()
+
