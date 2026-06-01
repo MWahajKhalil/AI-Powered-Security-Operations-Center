@@ -113,33 +113,37 @@ svg {
 .glass-card {
   background: var(--bg-card);
   border: 1px solid var(--border-muted);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .light-mode .glass-card {
-  box-shadow: 0 4px 16px 0 rgba(15, 23, 42, 0.02);
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.03);
 }
 
 .glass-card:hover {
-  border-color: rgba(14, 165, 233, 0.2);
-  box-shadow: 0 6px 20px 0 rgba(0, 0, 0, 0.18);
+  border-color: rgba(14, 165, 233, 0.26);
+  box-shadow: 0 12px 35px -8px rgba(0, 0, 0, 0.32);
 }
 
 .light-mode .glass-card:hover {
-  border-color: rgba(14, 165, 233, 0.22);
-  box-shadow: 0 6px 20px 0 rgba(15, 23, 42, 0.03);
+  border-color: rgba(14, 165, 233, 0.28);
+  box-shadow: 0 12px 35px -8px rgba(15, 23, 42, 0.04);
 }
 
 .glass-panel {
   background: var(--bg-panel);
   border: 1px solid var(--border-muted);
-  border-radius: 10px;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .light-mode .glass-panel {
-  box-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.04);
+  box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.05);
 }
 
 /* Elegant Text Shadows for Indicators */

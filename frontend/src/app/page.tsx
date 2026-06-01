@@ -161,38 +161,52 @@ export default function Home() {
                 />
               </div>
 
-              {/* Sleek Sub-Tab Navigation Switcher */}
-              <div className="flex border-b border-[var(--border-muted)] mt-2 gap-6 text-[10px] select-none transition-colors duration-300">
-                <button 
-                  onClick={() => setDashTab("radar")}
-                  className={`pb-3 font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all duration-200 ${
-                    dashTab === "radar" 
-                      ? "border-[#0EA5E9] text-[var(--text-primary)]" 
-                      : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-                  }`}
-                >
-                  🔍 Diagnostic Radar Map
-                </button>
-                <button 
-                  onClick={() => setDashTab("audits")}
-                  className={`pb-3 font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all duration-200 ${
-                    dashTab === "audits" 
-                      ? "border-[#EC4899] text-[var(--text-primary)]" 
-                      : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-                  }`}
-                >
-                  📋 Audit Transactors feed
-                </button>
-                <button 
-                  onClick={() => setDashTab("sandbox")}
-                  className={`pb-3 font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all duration-200 ${
-                    dashTab === "sandbox" 
-                      ? "border-[#6366F1] text-[var(--text-primary)]" 
-                      : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
-                  }`}
-                >
-                  🛡️ SecOps Sandbox Inspectors
-                </button>
+              {/* Premium Sleek Segmented Control Tab Switcher */}
+              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 border-b border-[var(--border-muted)] pb-4 mt-2 transition-colors duration-300">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[var(--text-primary)] transition-colors duration-300">
+                    SOC Dashboard Workspaces
+                  </h3>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-0.5 uppercase tracking-widest transition-colors duration-300">
+                    Switch between geolocator maps, logs transactors, or security inspect sandboxes
+                  </p>
+                </div>
+
+                <div className="flex bg-[var(--bg-panel)] border border-[var(--border-muted)] p-1 rounded-xl gap-1.5 self-start sm:self-auto transition-colors duration-300">
+                  <button
+                    onClick={() => setDashTab("radar")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider cursor-pointer transition-all duration-200 ${
+                      dashTab === "radar"
+                        ? "bg-[#0EA5E9]/10 text-[#0EA5E9] border border-[#0EA5E9]/25 shadow-[0_2px_8px_rgba(14,165,233,0.06)]"
+                        : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/3 border border-transparent"
+                    }`}
+                  >
+                    <span>🔍</span>
+                    <span>Diagnostic Radar</span>
+                  </button>
+                  <button
+                    onClick={() => setDashTab("audits")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider cursor-pointer transition-all duration-200 ${
+                      dashTab === "audits"
+                        ? "bg-[#EC4899]/10 text-[#EC4899] border border-[#EC4899]/25 shadow-[0_2px_8px_rgba(236,72,153,0.06)]"
+                        : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/3 border border-transparent"
+                    }`}
+                  >
+                    <span>📋</span>
+                    <span>Audit Transactors</span>
+                  </button>
+                  <button
+                    onClick={() => setDashTab("sandbox")}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[10px] font-extrabold uppercase tracking-wider cursor-pointer transition-all duration-200 ${
+                      dashTab === "sandbox"
+                        ? "bg-[#6366F1]/10 text-[#6366F1] border border-[#6366F1]/25 shadow-[0_2px_8px_rgba(99,102,241,0.06)]"
+                        : "text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--text-primary)]/3 border border-transparent"
+                    }`}
+                  >
+                    <span>🛡️</span>
+                    <span>SecOps Sandbox</span>
+                  </button>
+                </div>
               </div>
 
               {/* Tab Content 1: Threat Ingress Map & Network Scans Spline Chart */}
