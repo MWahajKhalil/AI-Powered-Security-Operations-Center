@@ -23,3 +23,7 @@ database/*.db-journal
 # Operating System specific files
 .DS_Store
 Thumbs.db
+
+# Local interview prep docs and changelogs (kept locally, not on GitHub!)
+docs/Interview_Preparation_Guide.md
+docs/Phase_15_Changelog.md

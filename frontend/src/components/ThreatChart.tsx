@@ -24,11 +24,34 @@ export default function ThreatChart() {
   const height = 180;
   const padding = 30;
 
-  // Scale calculations helper
+  // Chart limits configuration
   const maxScans = 350;
-  const getX = (index: number) => padding + (index * (width - 2 * padding)) / (data.length - 1);
-  const getY = (scans: number) => height - padding - (scans * (height - 2 * padding)) / maxScans;
-  const getRiskY = (risk: number) => height - padding - (risk * (height - 2 * padding)) / 100;
+
+  /**
+   * INTERVIEW HELPERS: Projecting Relational Coordinates onto SVG Grid
+   * 
+   * A common interview discussion is how to draw custom visualizations without heavy libraries.
+   * SVG uses standard coordinate maps starting from the top-left (X=0, Y=0).
+   * To project numeric logs volumes (0 to 350) and risk rates (0% to 100%) cleanly:
+   * 1. X Axis (getX): Maps a 0-indexed column element to horizontal pixels.
+   * 2. Y Axis (getY): Inverted calculation (height - padding - value). Subtracting 
+   *    value projects larger logs counts upwards on your browser window.
+   */
+
+  // Map 7-day logs arrays to horizontal pixels
+  const getX = (index: number): number => {
+    return padding + (index * (width - 2 * padding)) / (data.length - 1);
+  };
+
+  // Map absolute inbound scans (0-350) to vertical pixels (inverted)
+  const getY = (scans: number): number => {
+    return height - padding - (scans * (height - 2 * padding)) / maxScans;
+  };
+
+  // Map threat percentages (0-100%) to vertical pixels (inverted)
+  const getRiskY = (risk: number): number => {
+    return height - padding - (risk * (height - 2 * padding)) / 100;
+  };
 
   // Formulate the line path for the Risk Index curve
   const riskPath = data.map((d, i) => `${i === 0 ? "M" : "L"} ${getX(i)} ${getRiskY(d.risk)}`).join(" ");

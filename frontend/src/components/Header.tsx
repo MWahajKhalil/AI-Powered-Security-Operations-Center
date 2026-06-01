@@ -18,22 +18,36 @@ export default function Header({ activeView }: HeaderProps) {
   // Theme states
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
-  useEffect(() => {
-    // Read saved theme from localStorage on load
-    const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      if (savedTheme === "light") {
-        document.documentElement.classList.add("light-mode");
-      } else {
-        document.documentElement.classList.remove("light-mode");
-      }
-    } else {
-      // Default to dark mode
-      document.documentElement.classList.remove("light-mode");
-    }
-  }, []);
+  /**
+   * INTERVIEW HELPER: Telemetry Value Fluctuation Simulator
+   * 
+   * In a real technical interview, explaining how you simulate data is key.
+   * This helper applies a "Random Walk" algorithm. It takes the previous state,
+   * adds a constrained delta step, bounds the value within a safe min/max window,
+   * and normalizes the decimal precision. This prevents erratic visual jumps!
+   */
+  const calculateFluctuation = (
+    prev: number, 
+    min: number, 
+    max: number, 
+    maxStep: number,
+    decimalPlaces: number = 0
+  ): number => {
+    // Generate a step offset between -maxStep and +maxStep
+    const step = (Math.random() - 0.5) * 2 * maxStep;
+    const next = prev + step;
+    
+    // Clamp the next value within limits
+    const bounded = Math.max(min, Math.min(max, next));
+    return Number(bounded.toFixed(decimalPlaces));
+  };
 
+  /**
+   * INTERVIEW HELPER: Persistent Dark/Light Theme Manager
+   * 
+   * Explains how you handle local preferences without triggering screen-flashes.
+   * Toggles the '.light-mode' CSS class on document element and stores the state.
+   */
   const toggleTheme = () => {
     const nextTheme = theme === "dark" ? "light" : "dark";
     setTheme(nextTheme);
@@ -45,58 +59,64 @@ export default function Header({ activeView }: HeaderProps) {
     }
   };
 
+  // Sync theme with system localStorage on mounting
   useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const start = performance.now();
-        const response = await fetch("http://localhost:8000/health", {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-        });
-        const duration = Math.round(performance.now() - start);
-        if (response.ok) {
-          setBackendOnline(true);
-          setPing(Math.max(4, Math.min(duration, 35))); // Use actual latency capped at reasonable levels
-        } else {
-          setBackendOnline(false);
-        }
-      } catch (err) {
+    const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
+    if (savedTheme) {
+      setTheme(savedTheme);
+      if (savedTheme === "light") {
+        document.documentElement.classList.add("light-mode");
+      } else {
+        document.documentElement.classList.remove("light-mode");
+      }
+    }
+  }, []);
+
+  /**
+   * INTERVIEW HELPER: FastAPI Endpoint Network Diagnostics Ping
+   * 
+   * Queries the FastAPI /health endpoint to verify sync status.
+   * Tracks the execution latency in milliseconds to calculate connection speed!
+   */
+  const checkHealth = async () => {
+    try {
+      const start = performance.now();
+      const response = await fetch("http://localhost:8000/health", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const duration = Math.round(performance.now() - start);
+      if (response.ok) {
+        setBackendOnline(true);
+        setPing(Math.max(4, Math.min(duration, 35))); // Use actual ping latency capped at reasonable levels
+      } else {
         setBackendOnline(false);
       }
-    };
+    } catch (err) {
+      setBackendOnline(false);
+    }
+  };
 
-    // Initial check
+  // Connection monitoring loop
+  useEffect(() => {
     checkHealth();
-
-    // Check every 5 seconds for health
+    // Poll the backend every 5 seconds. Remember to clear the interval on unmount!
     const healthInterval = setInterval(checkHealth, 5000);
     return () => clearInterval(healthInterval);
   }, []);
 
-  // Telemetry fluctuation loop
+  // Telemetry fluctuation loop running on a separate timer (every 2s)
   useEffect(() => {
     const timer = setInterval(() => {
-      // CPU fluctuations: 1.2% - 5.8%
-      setCpu(prev => {
-        const diff = (Math.random() - 0.5) * 0.6;
-        const next = prev + diff;
-        return Number(Math.max(1.2, Math.min(5.8, next)).toFixed(1));
-      });
+      // 1. CPU fluctuations: 1.2% - 5.8%
+      setCpu(prev => calculateFluctuation(prev, 1.2, 5.8, 0.4, 1));
 
-      // Memory fluctuations: 408MB - 428MB
-      setMemory(prev => {
-        const diff = Math.floor((Math.random() - 0.5) * 4);
-        const next = prev + diff;
-        return Math.max(408, Math.min(428, next));
-      });
+      // 2. Memory fluctuations: 408MB - 428MB
+      setMemory(prev => Math.round(calculateFluctuation(prev, 408, 428, 1.5, 0)));
 
-      // Ping slight fluctuations if backend is online
+      // 3. Ping fluctuations (only if backend is active)
       if (backendOnline) {
-        setPing(prev => {
-          const diff = Math.floor((Math.random() - 0.5) * 2);
-          const next = prev + diff;
-          return Math.max(6, Math.min(25, next));
-        });
+        setPing(prev => Math.round(calculateFluctuation(prev, 6, 25, 1, 0)));
       }
     }, 2000);
 
