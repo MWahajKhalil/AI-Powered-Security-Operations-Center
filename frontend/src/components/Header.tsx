@@ -4,9 +4,10 @@ import React, { useEffect, useState } from "react";
 
 interface HeaderProps {
   activeView: "dashboard" | "chat";
+  onToggleControls: () => void;
 }
 
-export default function Header({ activeView }: HeaderProps) {
+export default function Header({ activeView, onToggleControls }: HeaderProps) {
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
   
   // Real-time telemetry states
@@ -14,9 +15,6 @@ export default function Header({ activeView }: HeaderProps) {
   const [memory, setMemory] = useState<number>(412);
   const [ping, setPing] = useState<number>(12);
   const [isScanning, setIsScanning] = useState<boolean>(false);
-
-  // Premium Theme States
-  const [activeTheme, setActiveTheme] = useState<"obsidian" | "cyberpunk" | "forest" | "silver">("obsidian");
 
   /**
    * INTERVIEW HELPER: Telemetry Value Fluctuation Simulator
@@ -41,27 +39,6 @@ export default function Header({ activeView }: HeaderProps) {
     const bounded = Math.max(min, Math.min(max, next));
     return Number(bounded.toFixed(decimalPlaces));
   };
-
-  const applyTheme = (themeName: "obsidian" | "cyberpunk" | "forest" | "silver") => {
-    const classes = ["theme-obsidian", "theme-cyberpunk", "theme-forest", "theme-silver"];
-    classes.forEach(c => document.documentElement.classList.remove(c));
-    document.documentElement.classList.add(`theme-${themeName}`);
-  };
-
-  const handleSelectTheme = (themeName: "obsidian" | "cyberpunk" | "forest" | "silver") => {
-    setActiveTheme(themeName);
-    localStorage.setItem("soc-theme", themeName);
-    applyTheme(themeName);
-  };
-
-  // Sync theme with system localStorage on mounting
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("soc-theme") as any;
-    if (savedTheme && ["obsidian", "cyberpunk", "forest", "silver"].includes(savedTheme)) {
-      setActiveTheme(savedTheme);
-      applyTheme(savedTheme);
-    }
-  }, []);
 
   /**
    * INTERVIEW HELPER: FastAPI Endpoint Network Diagnostics Ping
@@ -174,46 +151,17 @@ export default function Header({ activeView }: HeaderProps) {
 
         <div className="hidden md:block h-6 w-px bg-[var(--border-muted)] transition-colors duration-300" />
 
-        {/* Premium Swatch Multi-Theme Selector */}
-        <div className="flex items-center gap-2 bg-[var(--bg-obsidian)]/30 border border-[var(--border-muted)] px-2.5 py-1.5 rounded-lg flex-shrink-0">
-          <span className="text-[8px] text-[var(--text-muted)] uppercase tracking-widest font-extrabold mr-1.5 hidden sm:inline">Theme:</span>
-          
-          {/* Swatch 1: Obsidian */}
-          <button
-            onClick={() => handleSelectTheme("obsidian")}
-            className={`h-4 w-4 rounded-full bg-[#0EA5E9] border cursor-pointer hover:scale-110 transition-all ${
-              activeTheme === "obsidian" ? "border-white stroke-2 ring-2 ring-[#0EA5E9]/50 shadow-[0_0_8px_#0EA5E9]" : "border-transparent opacity-75 hover:opacity-100"
-            }`}
-            title="Theme: Midnight Obsidian"
-          />
-
-          {/* Swatch 2: Cyberpunk */}
-          <button
-            onClick={() => handleSelectTheme("cyberpunk")}
-            className={`h-4 w-4 rounded-full bg-[#EC4899] border cursor-pointer hover:scale-110 transition-all ${
-              activeTheme === "cyberpunk" ? "border-white stroke-2 ring-2 ring-[#EC4899]/50 shadow-[0_0_8px_#EC4899]" : "border-transparent opacity-75 hover:opacity-100"
-            }`}
-            title="Theme: Toxic Cyberpunk"
-          />
-
-          {/* Swatch 3: Forest */}
-          <button
-            onClick={() => handleSelectTheme("forest")}
-            className={`h-4 w-4 rounded-full bg-[#10B981] border cursor-pointer hover:scale-110 transition-all ${
-              activeTheme === "forest" ? "border-white stroke-2 ring-2 ring-[#10B981]/50 shadow-[0_0_8px_#10B981]" : "border-transparent opacity-75 hover:opacity-100"
-            }`}
-            title="Theme: Nordic Forest"
-          />
-
-          {/* Swatch 4: Silver Carbon */}
-          <button
-            onClick={() => handleSelectTheme("silver")}
-            className={`h-4 w-4 rounded-full bg-[#888888] border cursor-pointer hover:scale-110 transition-all ${
-              activeTheme === "silver" ? "border-white stroke-2 ring-2 ring-white/30 shadow-[0_0_8px_rgba(255,255,255,0.25)]" : "border-transparent opacity-75 hover:opacity-100"
-            }`}
-            title="Theme: Silver Carbon"
-          />
-        </div>
+        {/* Command Control Panel Gear Button */}
+        <button
+          onClick={onToggleControls}
+          className="p-1.5 rounded-lg border border-[var(--border-muted)] bg-[var(--bg-obsidian)]/20 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[#0EA5E9]/45 hover:shadow-[0_0_8px_rgba(14,165,233,0.15)] transition-all cursor-pointer flex items-center justify-center min-w-8 h-8 hover:bg-[var(--bg-obsidian)]/40"
+          title="Open Control Panel Drawer"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
 
         <div className="h-6 w-px bg-[var(--border-muted)] transition-colors duration-300" />
 

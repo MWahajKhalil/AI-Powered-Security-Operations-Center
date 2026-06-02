@@ -15,7 +15,7 @@ import SslInspector from "@/components/SslInspector";
 import ReportGenerator from "@/components/ReportGenerator";
 import CommandLaunchpad from "@/components/CommandLaunchpad";
 import NetworkScanner from "@/components/NetworkScanner";
-
+import ControlDrawer from "@/components/ControlDrawer";
 
 interface ThreatAdvisory {
   title: string;
@@ -30,6 +30,10 @@ export default function Home() {
   const [loadingThreats, setLoadingThreats] = useState<boolean>(true);
   const [chatQuery, setChatQuery] = useState("");
 
+  // Control Drawer overlay state
+  const [isControlsOpen, setIsControlsOpen] = useState(false);
+  const [activeTheme, setActiveTheme] = useState<"obsidian" | "cyberpunk" | "forest" | "silver">("obsidian");
+
   // Live Attack Simulation parameters
   const [activeSimulation, setActiveSimulation] = useState<"brute_force" | "sql_injection" | "ransomware" | "none">("none");
   const [riskScore, setRiskScore] = useState<number>(16.5);
@@ -39,6 +43,27 @@ export default function Home() {
 
   // Sandbox tabs routing switcher
   const [sandboxTab, setSandboxTab] = useState<"ssl" | "network">("ssl");
+
+  const applyTheme = (themeName: "obsidian" | "cyberpunk" | "forest" | "silver") => {
+    const classes = ["theme-obsidian", "theme-cyberpunk", "theme-forest", "theme-silver"];
+    classes.forEach(c => document.documentElement.classList.remove(c));
+    document.documentElement.classList.add(`theme-${themeName}`);
+  };
+
+  const handleSelectTheme = (themeName: "obsidian" | "cyberpunk" | "forest" | "silver") => {
+    setActiveTheme(themeName);
+    localStorage.setItem("soc-theme", themeName);
+    applyTheme(themeName);
+  };
+
+  // Sync theme with system localStorage on mounting
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("soc-theme") as any;
+    if (savedTheme && ["obsidian", "cyberpunk", "forest", "silver"].includes(savedTheme)) {
+      setActiveTheme(savedTheme);
+      applyTheme(savedTheme);
+    }
+  }, []);
 
   const handleInvestigateBulletin = (query: string) => {
     setChatQuery(query);
@@ -139,7 +164,7 @@ export default function Home() {
       {/* 2. Content Area Right */}
       <div className="flex-1 flex flex-col h-full overflow-hidden z-10">
         {/* Top Control Header */}
-        <Header activeView={activeView === "chat" ? "chat" : "dashboard"} />
+        <Header activeView={activeView === "chat" ? "chat" : "dashboard"} onToggleControls={() => setIsControlsOpen(true)} />
 
         {/* Dynamic Content Pane */}
         <main className="flex-1 overflow-y-auto p-6 bg-[var(--bg-obsidian)] relative transition-colors duration-300">
@@ -187,8 +212,6 @@ export default function Home() {
           {activeView === "launchpad" && (
             <CommandLaunchpad
               onNavigate={(view) => setActiveView(view)}
-              onTriggerSimulation={handleTriggerSimulation}
-              activeSimulation={activeSimulation}
               riskScore={riskScore}
             />
           )}
@@ -385,6 +408,17 @@ export default function Home() {
           )}
         </main>
       </div>
+
+      {/* 3. Control Panel overlay drawer */}
+      <ControlDrawer
+        isOpen={isControlsOpen}
+        onClose={() => setIsControlsOpen(false)}
+        activeTheme={activeTheme}
+        onSelectTheme={handleSelectTheme}
+        activeSimulation={activeSimulation}
+        onTriggerSimulation={handleTriggerSimulation}
+        riskScore={riskScore}
+      />
     </div>
   );
 }
