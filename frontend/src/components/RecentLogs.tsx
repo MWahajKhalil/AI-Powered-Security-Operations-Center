@@ -11,7 +11,11 @@ interface ToolExecutionLog {
   status: "success" | "failure";
 }
 
-export default function RecentLogs() {
+interface RecentLogsProps {
+  simulatedLogs?: ToolExecutionLog[];
+}
+
+export default function RecentLogs({ simulatedLogs = [] }: RecentLogsProps) {
   const [logs, setLogs] = useState<ToolExecutionLog[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +55,9 @@ export default function RecentLogs() {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredLogs = logs.filter((log) => {
+  const displayLogs = [...simulatedLogs, ...logs];
+
+  const filteredLogs = displayLogs.filter((log) => {
     const matchesSearch = log.tool_name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           JSON.stringify(log.arguments).toLowerCase().includes(searchQuery.toLowerCase()) ||
                           JSON.stringify(log.result).toLowerCase().includes(searchQuery.toLowerCase());

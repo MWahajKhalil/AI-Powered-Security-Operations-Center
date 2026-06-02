@@ -1,13 +1,11 @@
 @import "tailwindcss";
 
 /* ============================================================================
-   AI-POWERED SOC DASHBOARD DESIGN SYSTEM (VANILLA CSS)
-   Theme: Professional Corporate Enterprise SaaS
-   Supports Light & Dark Modes
+   AI-POWERED SOC DASHBOARD DESIGN SYSTEM (VANILLA CSS MULTI-THEME ENGINE)
    ============================================================================ */
 
-:root {
-  /* Matte Slate & Deep Obsidian Colors (Dark Theme - Default) */
+/* Theme 1: Midnight Obsidian (Default Dark Cyan) */
+:root, :root.theme-obsidian {
   --bg-obsidian: #0A0C10;
   --bg-card: rgba(16, 20, 28, 0.85);
   --bg-panel: rgba(12, 15, 22, 0.95);
@@ -18,9 +16,8 @@
   
   --border-muted: rgba(255, 255, 255, 0.06);
   --border-focus: rgba(14, 165, 233, 0.4);
-  --bg-terminal: #05080C;      /* Classic Dark Green-on-Black Terminal */
+  --bg-terminal: #05080C;
 
-  /* Highly Curated Professional Accents */
   --color-cyan: #0EA5E9;       /* Corporate Blue/Sky */
   --color-purple: #6366F1;     /* Corporate Indigo */
   --color-magenta: #EC4899;    /* Refined Pink/Magenta */
@@ -29,19 +26,85 @@
   --color-amber: #F59E0B;      /* Professional Yellow (Warning) */
 }
 
-/* Light Theme Variables */
+/* Theme 2: Toxic Cyberpunk (Glowing Neon Violet & Hot Crimson) */
+:root.theme-cyberpunk {
+  --bg-obsidian: #07010A;
+  --bg-card: rgba(18, 4, 26, 0.85);
+  --bg-panel: rgba(11, 2, 16, 0.95);
+  
+  --text-primary: #FFEBFC;
+  --text-secondary: #E6C7E2;
+  --text-muted: #A87CA4;
+  
+  --border-muted: rgba(236, 72, 153, 0.15);
+  --border-focus: rgba(236, 72, 153, 0.5);
+  --bg-terminal: #040006;
+
+  --color-cyan: #EC4899;       /* Neon pink/magenta overrides standard cyan */
+  --color-purple: #8B5CF6;     /* Bright purple */
+  --color-magenta: #EF4444;    /* Crimson alarm */
+  --color-emerald: #10B981;
+  --color-crimson: #FF0055;    /* Hot neon pink-red */
+  --color-amber: #F59E0B;
+}
+
+/* Theme 3: Nordic Forest / Moss Deep (Curated Emerald, Mint & Gold) */
+:root.theme-forest {
+  --bg-obsidian: #040C08;
+  --bg-card: rgba(10, 24, 18, 0.85);
+  --bg-panel: rgba(7, 18, 14, 0.95);
+  
+  --text-primary: #ECFDF5;
+  --text-secondary: #D1FAE5;
+  --text-muted: #6EE7B7;
+  
+  --border-muted: rgba(16, 185, 129, 0.12);
+  --border-focus: rgba(16, 185, 129, 0.5);
+  --bg-terminal: #020604;
+
+  --color-cyan: #10B981;       /* Deep Mint overrides standard cyan */
+  --color-purple: #059669;     /* Emerald green */
+  --color-magenta: #F59E0B;    /* Golden amber */
+  --color-emerald: #10B981;
+  --color-crimson: #EF4444;
+  --color-amber: #D97706;
+}
+
+/* Theme 4: Silver Carbon / Vercel Pure (Minimalist Monochrome & Slate Accent) */
+:root.theme-silver {
+  --bg-obsidian: #000000;      /* Absolute Jet Black */
+  --bg-card: rgba(18, 18, 18, 0.9);
+  --bg-panel: rgba(10, 10, 10, 0.98);
+  
+  --text-primary: #FFFFFF;
+  --text-secondary: #CCCCCC;
+  --text-muted: #777777;
+  
+  --border-muted: rgba(255, 255, 255, 0.12); /* Crisp Silver borders */
+  --border-focus: rgba(255, 255, 255, 0.6);
+  --bg-terminal: #050505;
+
+  --color-cyan: #FFFFFF;       /* Pure silver highlights */
+  --color-purple: #888888;     /* Cool grey */
+  --color-magenta: #FFFFFF;
+  --color-emerald: #10B981;
+  --color-crimson: #EF4444;
+  --color-amber: #F59E0B;
+}
+
+/* Base Light Theme variables fallback */
 :root.light-mode {
-  --bg-obsidian: #F1F5F9;      /* Ultra-premium soft slate background */
-  --bg-card: rgba(255, 255, 255, 0.95); /* Solid white card with subtle backdrop */
-  --bg-panel: #FFFFFF;         /* Solid white layout panels */
+  --bg-obsidian: #F1F5F9;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-panel: #FFFFFF;
   
-  --text-primary: #0F172A;     /* Deep Slate 900 */
-  --text-secondary: #334155;   /* Slate 700 */
-  --text-muted: #64748B;       /* Slate 500 */
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
   
-  --border-muted: rgba(15, 23, 42, 0.08); /* Clean grey contrast border */
+  --border-muted: rgba(15, 23, 42, 0.08);
   --border-focus: rgba(14, 165, 233, 0.5);
-  --bg-terminal: #0B0F19;      /* Developer standard dark-slate console */
+  --bg-terminal: #0B0F19;
 }
 
 /* Base Body Styles */

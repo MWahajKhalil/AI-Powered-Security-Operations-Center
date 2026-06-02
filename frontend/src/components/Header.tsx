@@ -15,8 +15,8 @@ export default function Header({ activeView }: HeaderProps) {
   const [ping, setPing] = useState<number>(12);
   const [isScanning, setIsScanning] = useState<boolean>(false);
 
-  // Theme states
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  // Premium Theme States
+  const [activeTheme, setActiveTheme] = useState<"obsidian" | "cyberpunk" | "forest" | "silver">("obsidian");
 
   /**
    * INTERVIEW HELPER: Telemetry Value Fluctuation Simulator
@@ -42,33 +42,24 @@ export default function Header({ activeView }: HeaderProps) {
     return Number(bounded.toFixed(decimalPlaces));
   };
 
-  /**
-   * INTERVIEW HELPER: Persistent Dark/Light Theme Manager
-   * 
-   * Explains how you handle local preferences without triggering screen-flashes.
-   * Toggles the '.light-mode' CSS class on document element and stores the state.
-   */
-  const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    localStorage.setItem("theme", nextTheme);
-    if (nextTheme === "light") {
-      document.documentElement.classList.add("light-mode");
-    } else {
-      document.documentElement.classList.remove("light-mode");
-    }
+  const applyTheme = (themeName: "obsidian" | "cyberpunk" | "forest" | "silver") => {
+    const classes = ["theme-obsidian", "theme-cyberpunk", "theme-forest", "theme-silver"];
+    classes.forEach(c => document.documentElement.classList.remove(c));
+    document.documentElement.classList.add(`theme-${themeName}`);
+  };
+
+  const handleSelectTheme = (themeName: "obsidian" | "cyberpunk" | "forest" | "silver") => {
+    setActiveTheme(themeName);
+    localStorage.setItem("soc-theme", themeName);
+    applyTheme(themeName);
   };
 
   // Sync theme with system localStorage on mounting
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
-    if (savedTheme) {
-      setTheme(savedTheme);
-      if (savedTheme === "light") {
-        document.documentElement.classList.add("light-mode");
-      } else {
-        document.documentElement.classList.remove("light-mode");
-      }
+    const savedTheme = localStorage.getItem("soc-theme") as any;
+    if (savedTheme && ["obsidian", "cyberpunk", "forest", "silver"].includes(savedTheme)) {
+      setActiveTheme(savedTheme);
+      applyTheme(savedTheme);
     }
   }, []);
 
@@ -183,22 +174,46 @@ export default function Header({ activeView }: HeaderProps) {
 
         <div className="hidden md:block h-6 w-px bg-[var(--border-muted)] transition-colors duration-300" />
 
-        {/* Sun/Moon Theme Toggle Switch */}
-        <button
-          onClick={toggleTheme}
-          className="p-1.5 rounded-lg border border-[var(--border-muted)] bg-[var(--bg-obsidian)]/20 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all cursor-pointer flex items-center justify-center min-w-8 h-8 hover:bg-[var(--bg-obsidian)]/40"
-          title={`Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`}
-        >
-          {theme === "dark" ? (
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-            </svg>
-          ) : (
-            <svg className="h-3.5 w-3.5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-            </svg>
-          )}
-        </button>
+        {/* Premium Swatch Multi-Theme Selector */}
+        <div className="flex items-center gap-2 bg-[var(--bg-obsidian)]/30 border border-[var(--border-muted)] px-2.5 py-1.5 rounded-lg flex-shrink-0">
+          <span className="text-[8px] text-[var(--text-muted)] uppercase tracking-widest font-extrabold mr-1.5 hidden sm:inline">Theme:</span>
+          
+          {/* Swatch 1: Obsidian */}
+          <button
+            onClick={() => handleSelectTheme("obsidian")}
+            className={`h-4 w-4 rounded-full bg-[#0EA5E9] border cursor-pointer hover:scale-110 transition-all ${
+              activeTheme === "obsidian" ? "border-white stroke-2 ring-2 ring-[#0EA5E9]/50 shadow-[0_0_8px_#0EA5E9]" : "border-transparent opacity-75 hover:opacity-100"
+            }`}
+            title="Theme: Midnight Obsidian"
+          />
+
+          {/* Swatch 2: Cyberpunk */}
+          <button
+            onClick={() => handleSelectTheme("cyberpunk")}
+            className={`h-4 w-4 rounded-full bg-[#EC4899] border cursor-pointer hover:scale-110 transition-all ${
+              activeTheme === "cyberpunk" ? "border-white stroke-2 ring-2 ring-[#EC4899]/50 shadow-[0_0_8px_#EC4899]" : "border-transparent opacity-75 hover:opacity-100"
+            }`}
+            title="Theme: Toxic Cyberpunk"
+          />
+
+          {/* Swatch 3: Forest */}
+          <button
+            onClick={() => handleSelectTheme("forest")}
+            className={`h-4 w-4 rounded-full bg-[#10B981] border cursor-pointer hover:scale-110 transition-all ${
+              activeTheme === "forest" ? "border-white stroke-2 ring-2 ring-[#10B981]/50 shadow-[0_0_8px_#10B981]" : "border-transparent opacity-75 hover:opacity-100"
+            }`}
+            title="Theme: Nordic Forest"
+          />
+
+          {/* Swatch 4: Silver Carbon */}
+          <button
+            onClick={() => handleSelectTheme("silver")}
+            className={`h-4 w-4 rounded-full bg-[#888888] border cursor-pointer hover:scale-110 transition-all ${
+              activeTheme === "silver" ? "border-white stroke-2 ring-2 ring-white/30 shadow-[0_0_8px_rgba(255,255,255,0.25)]" : "border-transparent opacity-75 hover:opacity-100"
+            }`}
+            title="Theme: Silver Carbon"
+          />
+        </div>
 
         <div className="h-6 w-px bg-[var(--border-muted)] transition-colors duration-300" />
 

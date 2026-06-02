@@ -11,7 +11,11 @@ interface ToolExecutionLog {
   status: "success" | "failure";
 }
 
-export default function AuditTerminal() {
+interface AuditTerminalProps {
+  simulatedLogs?: ToolExecutionLog[];
+}
+
+export default function AuditTerminal({ simulatedLogs = [] }: AuditTerminalProps) {
   const [logs, setLogs] = useState<ToolExecutionLog[]>([]);
   const [error, setError] = useState<string | null>(null);
   const terminalEndRef = useRef<HTMLDivElement | null>(null);
@@ -81,69 +85,72 @@ export default function AuditTerminal() {
         </div>
 
         {/* Dynamic logs streams */}
-        {logs.length === 0 ? (
-          <div className="text-[var(--text-muted)]/40 text-[10px]">
-            {error ? (
-              <div className="text-[var(--color-crimson)] font-bold">
-                [!] SYSTEM ERROR: {error}. BACKEND CONNECTION BLOCKED.
-              </div>
-            ) : (
-              <div>
-                analyst@soc-terminal:~$ [INFO] Waiting for agent tool invocations...
-                <br />
-                analyst@soc-terminal:~$ _
-              </div>
-            )}
-          </div>
-        ) : (
-          logs.map((log, index) => {
-            const date = new Date(log.timestamp);
-            const timeStr = date.toLocaleTimeString([], { hour12: false });
-            const isSuccess = log.status === "success";
-
-            return (
-              <div key={index} className="space-y-1 fade-in">
-                {/* Prompt Row */}
-                <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-[var(--text-muted)]">
-                  <span className="text-[var(--color-cyan)]">analyst@soc-terminal:~$</span>
-                  <span>[{timeStr}]</span>
-                  <span className="text-[var(--text-muted)]/80">executing tool:</span>
-                  <span className="text-[var(--text-primary)] font-bold transition-colors duration-300">{log.tool_name}</span>
-                  <span className="text-[var(--text-muted)]/40">...</span>
-                  <span 
-                    className={`font-bold transition-colors duration-300 ${isSuccess ? "text-[var(--color-emerald)]" : "text-[var(--color-crimson)]"}`}
-                  >
-                    {isSuccess ? "SUCCESS" : "FAILED"} ({log.execution_time_ms}ms)
-                  </span>
+        {(() => {
+          const displayLogs = [...logs, ...simulatedLogs];
+          return displayLogs.length === 0 ? (
+            <div className="text-[var(--text-muted)]/40 text-[10px]">
+              {error ? (
+                <div className="text-[var(--color-crimson)] font-bold">
+                  [!] SYSTEM ERROR: {error}. BACKEND CONNECTION BLOCKED.
                 </div>
-
-                {/* Subprocess JSON arguments */}
-                <div className="pl-4 text-[10px] text-[var(--color-purple)] font-semibold transition-colors duration-300">
-                  <span>INPUTS:</span> {JSON.stringify(log.arguments)}
+              ) : (
+                <div>
+                  analyst@soc-terminal:~$ [INFO] Waiting for agent tool invocations...
+                  <br />
+                  analyst@soc-terminal:~$ _
                 </div>
+              )}
+            </div>
+          ) : (
+            <>
+              {displayLogs.map((log, index) => {
+                const date = new Date(log.timestamp);
+                const timeStr = date.toLocaleTimeString([], { hour12: false });
+                const isSuccess = log.status === "success";
 
-                {/* Subprocess Output data (Real stdout) */}
-                <div 
-                  className="pl-4 text-[10px] text-[var(--text-secondary)] font-mono leading-relaxed bg-[var(--bg-obsidian)] border-l py-1.5 px-3 overflow-x-auto max-w-full rounded transition-all duration-300"
-                  style={{
-                    borderLeftColor: isSuccess ? "var(--color-emerald)" : "var(--color-crimson)"
-                  }}
-                >
-                  <span className="text-[var(--text-muted)]/40 mr-1 select-none">$ stdout &gt;</span>
-                  {typeof log.result === "string" ? log.result.trim() : JSON.stringify(log.result, null, 2)}
-                </div>
+                return (
+                  <div key={index} className="space-y-1 fade-in">
+                    {/* Prompt Row */}
+                    <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-[var(--text-muted)]">
+                      <span className="text-[var(--color-cyan)]">analyst@soc-terminal:~$</span>
+                      <span>[{timeStr}]</span>
+                      <span className="text-[var(--text-muted)]/80">executing tool:</span>
+                      <span className="text-[var(--text-primary)] font-bold transition-colors duration-300">{log.tool_name}</span>
+                      <span className="text-[var(--text-muted)]/40">...</span>
+                      <span 
+                        className={`font-bold transition-colors duration-300 ${isSuccess ? "text-[var(--color-emerald)]" : "text-[var(--color-crimson)]"}`}
+                      >
+                        {isSuccess ? "SUCCESS" : "FAILED"} ({log.execution_time_ms}ms)
+                      </span>
+                    </div>
+
+                    {/* Subprocess JSON arguments */}
+                    <div className="pl-4 text-[10px] text-[var(--color-purple)] font-semibold transition-colors duration-300">
+                      <span>INPUTS:</span> {JSON.stringify(log.arguments)}
+                    </div>
+
+                    {/* Subprocess Output data (Real stdout) */}
+                    <div 
+                      className="pl-4 text-[10px] text-[var(--text-secondary)] font-mono leading-relaxed bg-[var(--bg-obsidian)] border-l py-1.5 px-3 overflow-x-auto max-w-full rounded transition-all duration-300"
+                      style={{
+                        borderLeftColor: isSuccess ? "var(--color-emerald)" : "var(--color-crimson)"
+                      }}
+                    >
+                      <span className="text-[var(--text-muted)]/40 mr-1 select-none">$ stdout &gt;</span>
+                      {typeof log.result === "string" ? log.result.trim() : JSON.stringify(log.result, null, 2)}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Cursor indicator */}
+              <div className="text-[10px] text-[var(--text-muted)]/40 pt-1 flex items-center gap-1.5 select-none transition-colors duration-300">
+                <span className="text-[var(--color-cyan)]">analyst@soc-terminal:~$</span>
+                <span className="h-3 w-1.5 bg-[var(--color-cyan)] animate-pulse" />
               </div>
-            );
-          })
-        )}
-
-        {/* Cursor indicator */}
-        {logs.length > 0 && (
-          <div className="text-[10px] text-[var(--text-muted)]/40 pt-1 flex items-center gap-1.5 select-none transition-colors duration-300">
-            <span className="text-[var(--color-cyan)]">analyst@soc-terminal:~$</span>
-            <span className="h-3 w-1.5 bg-[var(--color-cyan)] animate-pulse" />
-          </div>
-        )}
+            </>
+          );
+        })()}
 
         {/* Anchor for auto scroll */}
         <div ref={terminalEndRef} />

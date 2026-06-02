@@ -3,8 +3,8 @@
 import React from "react";
 
 interface SidebarProps {
-  activeView: "dashboard" | "chat";
-  setActiveView: (view: "dashboard" | "chat") => void;
+  activeView: "launchpad" | "radar" | "audits" | "sandbox" | "chat";
+  setActiveView: (view: "launchpad" | "radar" | "audits" | "sandbox" | "chat") => void;
 }
 
 export default function Sidebar({ activeView, setActiveView }: SidebarProps) {
@@ -27,22 +27,61 @@ export default function Sidebar({ activeView, setActiveView }: SidebarProps) {
 
       {/* Nav Menu Links */}
       <nav className="flex-1 p-4 space-y-1.5 mt-4">
-        {/* Navigation Option 1: Ingress Dashboard */}
+        {/* Navigation Option 0: Command Deck Launchpad */}
         <button
-          onClick={() => setActiveView("dashboard")}
+          onClick={() => setActiveView("launchpad")}
           className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer ${
-            activeView === "dashboard"
+            activeView === "launchpad"
+              ? "bg-[#6366F1]/10 text-[#6366F1] border border-[#6366F1]/25 shadow-[0_4px_12px_rgba(99,102,241,0.04)]"
+              : "text-[#8F9CAE] hover:text-white hover:bg-white/3 border border-transparent"
+          }`}
+        >
+          <span>🎯</span>
+          <span>Command Deck</span>
+        </button>
+
+        <div className="h-px bg-white/5 my-2 mx-2" />
+
+        {/* Navigation Option 1: Threat Radar */}
+        <button
+          onClick={() => setActiveView("radar")}
+          className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer ${
+            activeView === "radar"
               ? "bg-[#0EA5E9]/10 text-[#0EA5E9] border border-[#0EA5E9]/25 shadow-[0_4px_12px_rgba(14,165,233,0.04)]"
               : "text-[#8F9CAE] hover:text-white hover:bg-white/3 border border-transparent"
           }`}
         >
-          <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z" />
-          </svg>
-          Threat Ingress
+          <span>🌐</span>
+          <span>Threat Radar</span>
         </button>
 
-        {/* Navigation Option 2: Incident Chat */}
+        {/* Navigation Option 2: Sensor Audits */}
+        <button
+          onClick={() => setActiveView("audits")}
+          className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer ${
+            activeView === "audits"
+              ? "bg-[#EC4899]/10 text-[#EC4899] border border-[#EC4899]/25 shadow-[0_4px_12px_rgba(236,72,153,0.04)]"
+              : "text-[#8F9CAE] hover:text-white hover:bg-white/3 border border-transparent"
+          }`}
+        >
+          <span>📑</span>
+          <span>Sensor Audits</span>
+        </button>
+
+        {/* Navigation Option 3: Secure Sandbox */}
+        <button
+          onClick={() => setActiveView("sandbox")}
+          className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer ${
+            activeView === "sandbox"
+              ? "bg-[#6366F1]/10 text-[#6366F1] border border-[#6366F1]/25 shadow-[0_4px_12px_rgba(99,102,241,0.04)]"
+              : "text-[#8F9CAE] hover:text-white hover:bg-white/3 border border-transparent"
+          }`}
+        >
+          <span>🔬</span>
+          <span>Secure Sandbox</span>
+        </button>
+
+        {/* Navigation Option 4: AI Threat Hunt */}
         <button
           onClick={() => setActiveView("chat")}
           className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-semibold tracking-wide transition-all duration-200 cursor-pointer ${
@@ -51,10 +90,8 @@ export default function Sidebar({ activeView, setActiveView }: SidebarProps) {
               : "text-[#8F9CAE] hover:text-white hover:bg-white/3 border border-transparent"
           }`}
         >
-          <svg className="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-          </svg>
-          Threat Hunt
+          <span>💬</span>
+          <span>AI Threat Hunt</span>
         </button>
       </nav>
 

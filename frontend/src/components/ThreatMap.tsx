@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 
 interface MapPin {
   ip: string;
@@ -37,6 +37,69 @@ export default function ThreatMap({ activePins = [] }: ThreatMapProps) {
     const y = height - 20 - ((lat + 90) * (height - 40)) / 180;
     return { x, y };
   };
+
+  // Helper to generate a high-fidelity dotted world landmass grid
+  const worldDots = useMemo(() => {
+    const dots: { lat: number; lon: number }[] = [];
+    
+    // North America
+    for (let lat = 18; lat <= 70; lat += 6) {
+      for (let lon = -165; lon <= -55; lon += 8) {
+        if (lon < -130 && lat < 45) continue;
+        if (lon > -80 && lat < 25) continue;
+        dots.push({ lat, lon });
+      }
+    }
+    
+    // South America
+    for (let lat = -55; lat <= 12; lat += 6) {
+      for (let lon = -82; lon <= -34; lon += 7) {
+        if (lat < -20 && lon > -50) continue;
+        if (lat > 0 && lon < -75) continue;
+        dots.push({ lat, lon });
+      }
+    }
+    
+    // Europe & Russia/Greenland
+    for (let lat = 36; lat <= 72; lat += 5) {
+      for (let lon = -25; lon <= 45; lon += 6) {
+        if (lat > 60 && lon < -10) continue; // Iceland/Greenland separate
+        dots.push({ lat, lon });
+      }
+    }
+    
+    // Asia & Middle East
+    for (let lat = 8; lat <= 75; lat += 6) {
+      for (let lon = 45; lon <= 180; lon += 7) {
+        if (lat < 22 && lon < 78) continue; // Middle East boundary
+        if (lat < 10 && lon > 150) continue;
+        dots.push({ lat, lon });
+      }
+    }
+    
+    // Africa
+    for (let lat = -35; lat <= 35; lat += 6) {
+      for (let lon = -18; lon <= 52; lon += 7) {
+        if (lat < -10 && lon < 10) continue;
+        if (lat > 15 && lon > 38) continue;
+        dots.push({ lat, lon });
+      }
+    }
+    
+    // Australia & Indonesia
+    for (let lat = -42; lat <= -10; lat += 5) {
+      for (let lon = 112; lon <= 154; lon += 6) {
+        dots.push({ lat, lon });
+      }
+    }
+    for (let lat = -8; lat <= 8; lat += 5) {
+      for (let lon = 95; lon <= 150; lon += 6) {
+        dots.push({ lat, lon });
+      }
+    }
+    
+    return dots;
+  }, []);
 
   // Seed standard fallback visual coordinate nodes (representing major global SOC targets)
   // resolved from live DNS/routing queries.
@@ -107,26 +170,19 @@ export default function ThreatMap({ activePins = [] }: ThreatMapProps) {
             );
           })}
 
-          {/* Outlining Highly Simplified World Continents (Pure Responsive SVG Vector Paths) */}
-          <g stroke="var(--border-muted)" strokeWidth={1} fill="rgba(255, 255, 255, 0.015)" strokeLinejoin="round" className="transition-all duration-300">
-            {/* North America Outlines */}
-            <path d="M 60,30 L 90,30 L 120,40 L 140,55 L 145,80 L 120,110 L 90,120 L 75,90 L 65,80 L 60,30 Z" />
-            <path d="M 120,110 L 130,120 L 135,135 L 125,140 L 115,120 Z" /> {/* Central America */}
-            
-            {/* South America Outlines */}
-            <path d="M 125,140 L 140,140 L 160,155 L 170,175 L 155,215 L 135,225 L 125,200 L 120,170 L 125,140 Z" />
-            
-            {/* Eurasia (Europe + Asia) Outlines */}
-            <path d="M 200,40 L 250,30 L 300,25 L 380,25 L 420,30 L 440,50 L 440,75 L 420,110 L 390,125 L 360,120 L 320,110 L 290,130 L 270,130 L 260,110 L 245,110 L 230,125 L 210,120 L 205,100 L 180,85 L 185,60 L 200,40 Z" />
-            
-            {/* Africa Outlines */}
-            <path d="M 210,120 L 245,110 L 265,120 L 285,145 L 280,175 L 250,215 L 240,215 L 225,180 L 205,145 L 210,120 Z" />
-            
-            {/* Australia / Oceania Outlines */}
-            <path d="M 390,170 L 415,170 L 425,185 L 415,210 L 385,200 L 380,185 L 390,170 Z" />
-            
-            {/* Greenland */}
-            <path d="M 130,20 L 155,20 L 150,35 L 135,40 L 130,20 Z" />
+          {/* Dotted World Landmass Grid (Ultra-Premium, Realistic keyless SaaS Style) */}
+          <g fill="var(--text-muted)" className="opacity-30 transition-all duration-300">
+            {worldDots.map((dot, idx) => {
+              const { x, y } = getXY(dot.lat, dot.lon);
+              return (
+                <circle 
+                  key={`land-dot-${idx}`}
+                  cx={x}
+                  cy={y}
+                  r={1.1}
+                />
+              );
+            })}
           </g>
 
           {/* Dynamic Map Pins & Radar Pulser */}

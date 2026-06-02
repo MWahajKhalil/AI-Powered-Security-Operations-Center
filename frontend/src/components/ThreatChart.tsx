@@ -2,9 +2,13 @@
 
 import React, { useState } from "react";
 
-export default function ThreatChart() {
+interface ThreatChartProps {
+  riskScore?: number;
+}
+
+export default function ThreatChart({ riskScore }: ThreatChartProps) {
   // Static timeline data representing last 7 days in the SOC Center
-  const data = [
+  const staticData = [
     { day: "Mon", scans: 140, blocked: 12, risk: 35 },
     { day: "Tue", scans: 185, blocked: 22, risk: 48 },
     { day: "Wed", scans: 230, blocked: 45, risk: 78 },
@@ -13,6 +17,11 @@ export default function ThreatChart() {
     { day: "Sat", scans: 110, blocked: 8,  risk: 20 },
     { day: "Sun", scans: 165, blocked: 14, risk: 30 }
   ];
+
+  const data = [...staticData];
+  if (riskScore !== undefined) {
+    data[data.length - 1] = { ...data[data.length - 1], risk: riskScore };
+  }
 
   // Interactive UI States
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
