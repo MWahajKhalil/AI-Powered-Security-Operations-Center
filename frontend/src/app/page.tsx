@@ -142,14 +142,14 @@ export default function Home() {
       try {
         const argsStr = JSON.stringify(log.arguments);
         const matches = argsStr.match(ipRegex);
-        if (matches) matches.forEach(ip => ips.add(ip));
+        if (matches) matches.forEach((ip: string) => ips.add(ip));
       } catch (_) {}
 
       // 2. Scan result stringified
       try {
         const resStr = typeof log.result === "string" ? log.result : JSON.stringify(log.result);
         const matches = resStr.match(ipRegex);
-        if (matches) matches.forEach(ip => ips.add(ip));
+        if (matches) matches.forEach((ip: string) => ips.add(ip));
       } catch (_) {}
     });
 
