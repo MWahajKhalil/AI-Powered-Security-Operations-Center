@@ -16,6 +16,8 @@ import ReportGenerator from "@/components/ReportGenerator";
 import CommandLaunchpad from "@/components/CommandLaunchpad";
 import NetworkScanner from "@/components/NetworkScanner";
 import ControlDrawer from "@/components/ControlDrawer";
+import NetworkTopology from "@/components/NetworkTopology";
+
 
 interface ThreatAdvisory {
   title: string;
@@ -43,6 +45,10 @@ export default function Home() {
 
   // Sandbox tabs routing switcher
   const [sandboxTab, setSandboxTab] = useState<"ssl" | "network">("ssl");
+
+  // Real-Time Health & Public IP resolution state
+  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
+  const [publicIp, setPublicIp] = useState<string>("Resolving...");
 
   const applyTheme = (themeName: "obsidian" | "cyberpunk" | "forest" | "silver") => {
     const classes = ["theme-obsidian", "theme-cyberpunk", "theme-forest", "theme-silver"];
@@ -87,8 +93,47 @@ export default function Home() {
     }
   };
 
+  // Check backend health and status
+  const checkHealth = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/health", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (response.ok) {
+        setBackendOnline(true);
+      } else {
+        setBackendOnline(false);
+      }
+    } catch (err) {
+      setBackendOnline(false);
+    }
+  };
+
   useEffect(() => {
     fetchThreats();
+
+    // Fetch analyst public IP address
+    const fetchPublicIp = async () => {
+      try {
+        const response = await fetch("https://api.ipify.org?format=json");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.ip) {
+            setPublicIp(data.ip);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to retrieve public IP, setting fallback.");
+        setPublicIp("192.168.1.1");
+      }
+    };
+
+    fetchPublicIp();
+
+    checkHealth();
+    const healthInterval = setInterval(checkHealth, 5000);
+    return () => clearInterval(healthInterval);
   }, []);
 
   // Handler to inject simulated attacks globally across all workspace views
@@ -164,7 +209,11 @@ export default function Home() {
       {/* 2. Content Area Right */}
       <div className="flex-1 flex flex-col h-full overflow-hidden z-10">
         {/* Top Control Header */}
-        <Header activeView={activeView === "chat" ? "chat" : "dashboard"} onToggleControls={() => setIsControlsOpen(true)} />
+        <Header 
+          activeView={activeView === "chat" ? "chat" : "dashboard"} 
+          onToggleControls={() => setIsControlsOpen(true)} 
+          backendOnline={backendOnline}
+        />
 
         {/* Dynamic Content Pane */}
         <main className="flex-1 overflow-y-auto p-6 bg-[var(--bg-obsidian)] relative transition-colors duration-300">
@@ -276,8 +325,18 @@ export default function Home() {
 
               {/* Threat Radar Visual Elements */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column: Geolocator Map */}
                 <ThreatMap activePins={simulatedPins} />
-                <ThreatChart riskScore={riskScore} />
+                
+                {/* Right Column: Stacked Topology Infrastructure and Trend Chart */}
+                <div className="flex flex-col gap-6">
+                  <NetworkTopology 
+                    activeSimulation={activeSimulation} 
+                    backendOnline={backendOnline}
+                    publicIp={publicIp}
+                  />
+                  <ThreatChart riskScore={riskScore} />
+                </div>
               </div>
             </div>
           )}

@@ -5,11 +5,10 @@ import React, { useEffect, useState } from "react";
 interface HeaderProps {
   activeView: "dashboard" | "chat";
   onToggleControls: () => void;
+  backendOnline: boolean | null;
 }
 
-export default function Header({ activeView, onToggleControls }: HeaderProps) {
-  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
-  
+export default function Header({ activeView, onToggleControls, backendOnline }: HeaderProps) {
   // Real-time telemetry states
   const [cpu, setCpu] = useState<number>(2.4);
   const [memory, setMemory] = useState<number>(412);
@@ -39,39 +38,6 @@ export default function Header({ activeView, onToggleControls }: HeaderProps) {
     const bounded = Math.max(min, Math.min(max, next));
     return Number(bounded.toFixed(decimalPlaces));
   };
-
-  /**
-   * INTERVIEW HELPER: FastAPI Endpoint Network Diagnostics Ping
-   * 
-   * Queries the FastAPI /health endpoint to verify sync status.
-   * Tracks the execution latency in milliseconds to calculate connection speed!
-   */
-  const checkHealth = async () => {
-    try {
-      const start = performance.now();
-      const response = await fetch("http://localhost:8000/health", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      const duration = Math.round(performance.now() - start);
-      if (response.ok) {
-        setBackendOnline(true);
-        setPing(Math.max(4, Math.min(duration, 35))); // Use actual ping latency capped at reasonable levels
-      } else {
-        setBackendOnline(false);
-      }
-    } catch (err) {
-      setBackendOnline(false);
-    }
-  };
-
-  // Connection monitoring loop
-  useEffect(() => {
-    checkHealth();
-    // Poll the backend every 5 seconds. Remember to clear the interval on unmount!
-    const healthInterval = setInterval(checkHealth, 5000);
-    return () => clearInterval(healthInterval);
-  }, []);
 
   // Telemetry fluctuation loop running on a separate timer (every 2s)
   useEffect(() => {
