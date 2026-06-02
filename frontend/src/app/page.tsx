@@ -50,6 +50,11 @@ export default function Home() {
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
   const [publicIp, setPublicIp] = useState<string>("Resolving...");
 
+  // SQLite historical logs state
+  const [dbLogs, setDbLogs] = useState<any[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState<boolean>(true);
+  const [ipGeoCache, setIpGeoCache] = useState<Record<string, any>>({});
+
   const applyTheme = (themeName: "obsidian" | "cyberpunk" | "forest" | "silver") => {
     const classes = ["theme-obsidian", "theme-cyberpunk", "theme-forest", "theme-silver"];
     classes.forEach(c => document.documentElement.classList.remove(c));
@@ -110,6 +115,133 @@ export default function Home() {
     }
   };
 
+  // Fetch actual database logs from SQLite
+  const fetchDbLogs = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/api/logs?limit=50");
+      if (response.ok) {
+        const payload = await response.json();
+        if (payload.success && Array.isArray(payload.data)) {
+          setDbLogs(payload.data);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch SQLite database logs from backend.");
+    } finally {
+      setLoadingLogs(false);
+    }
+  };
+
+  // Extract public IPs from database logs
+  const extractIpsFromLogs = (logs: any[]): string[] => {
+    const ips = new Set<string>();
+    const ipRegex = /\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b/g;
+
+    logs.forEach(log => {
+      // 1. Scan arguments stringified
+      try {
+        const argsStr = JSON.stringify(log.arguments);
+        const matches = argsStr.match(ipRegex);
+        if (matches) matches.forEach(ip => ips.add(ip));
+      } catch (_) {}
+
+      // 2. Scan result stringified
+      try {
+        const resStr = typeof log.result === "string" ? log.result : JSON.stringify(log.result);
+        const matches = resStr.match(ipRegex);
+        if (matches) matches.forEach(ip => ips.add(ip));
+      } catch (_) {}
+    });
+
+    const isPublicIp = (ip: string) => {
+      if (ip.startsWith("127.") || ip.startsWith("192.168.") || ip.startsWith("10.")) return false;
+      if (ip.startsWith("172.")) {
+        const parts = ip.split(".");
+        const secondPart = parseInt(parts[1], 10);
+        if (secondPart >= 16 && secondPart <= 31) return false;
+      }
+      return true;
+    };
+
+    return Array.from(ips).filter(isPublicIp);
+  };
+
+  // Geolocate newly discovered IPs with rate-limiting
+  useEffect(() => {
+    const publicIps = extractIpsFromLogs(dbLogs);
+    const uncachedIps = publicIps.filter(ip => !ipGeoCache[ip]);
+    
+    if (uncachedIps.length === 0) return;
+
+    const geolocateIps = async () => {
+      const newCache = { ...ipGeoCache };
+      let updated = false;
+
+      for (const ip of uncachedIps) {
+        try {
+          const res = await fetch(`http://ip-api.com/json/${ip}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.status === "success") {
+              newCache[ip] = {
+                ip,
+                lat: data.lat ?? 0.0,
+                lon: data.lon ?? 0.0,
+                locationName: `${data.city || "Unknown City"}, ${data.countryCode || data.country || "Unknown Country"}`,
+                severity: "MEDIUM" as const,
+                timestamp: "Real-Time Trace"
+              };
+              updated = true;
+            }
+          }
+        } catch (err) {
+          console.warn(`Failed to geolocate IP: ${ip}`, err);
+        }
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      if (updated) {
+        setIpGeoCache(newCache);
+      }
+    };
+
+    geolocateIps();
+  }, [dbLogs, ipGeoCache]);
+
+  // Compute map pins from geolocated database logs
+  const parsedPins = React.useMemo(() => {
+    const pins: any[] = [];
+    const publicIps = extractIpsFromLogs(dbLogs);
+    publicIps.forEach(ip => {
+      if (ipGeoCache[ip]) {
+        pins.push({ ...ipGeoCache[ip] });
+      }
+    });
+    return pins;
+  }, [dbLogs, ipGeoCache]);
+
+  // Combine simulated pins and geolocated logs pins
+  const combinedPins = React.useMemo(() => {
+    const list = parsedPins.map(p => ({ ...p, isLatest: false }));
+    if (activeSimulation !== "none") {
+      simulatedPins.forEach(simPin => {
+        if (!list.some(p => p.ip === simPin.ip)) {
+          list.push({ ...simPin, isLatest: false });
+        }
+      });
+      // Set the active simulation intrusion pin as the latest
+      list.forEach(p => {
+        if (p.timestamp === "SIMULATED INTRUSION") {
+          p.isLatest = true;
+        }
+      });
+    } else if (list.length > 0) {
+      // First parsed pin represents the newest database log event
+      list[0].isLatest = true;
+    }
+    return list;
+  }, [activeSimulation, simulatedPins, parsedPins]);
+
   useEffect(() => {
     fetchThreats();
 
@@ -132,8 +264,15 @@ export default function Home() {
     fetchPublicIp();
 
     checkHealth();
+    fetchDbLogs();
+
     const healthInterval = setInterval(checkHealth, 5000);
-    return () => clearInterval(healthInterval);
+    const logsInterval = setInterval(fetchDbLogs, 4000);
+
+    return () => {
+      clearInterval(healthInterval);
+      clearInterval(logsInterval);
+    };
   }, []);
 
   // Handler to inject simulated attacks globally across all workspace views
@@ -326,7 +465,7 @@ export default function Home() {
               {/* Threat Radar Visual Elements */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left Column: Geolocator Map */}
-                <ThreatMap activePins={simulatedPins} />
+                <ThreatMap activePins={combinedPins} />
                 
                 {/* Right Column: Stacked Topology Infrastructure and Trend Chart */}
                 <div className="flex flex-col gap-6">
@@ -335,7 +474,7 @@ export default function Home() {
                     backendOnline={backendOnline}
                     publicIp={publicIp}
                   />
-                  <ThreatChart riskScore={riskScore} />
+                  <ThreatChart riskScore={riskScore} logs={dbLogs} />
                 </div>
               </div>
             </div>
@@ -368,7 +507,7 @@ export default function Home() {
                   loading={loadingThreats}
                   onInvestigate={handleInvestigateBulletin}
                 />
-                <RecentLogs simulatedLogs={simulatedLogs} />
+                <RecentLogs simulatedLogs={simulatedLogs} logs={dbLogs} loading={loadingLogs} />
               </div>
             </div>
           )}
@@ -446,14 +585,22 @@ export default function Home() {
                 
                 {/* LEFT COLUMN: Dynamic Dialogue Console */}
                 <div className="h-full overflow-hidden">
-                  <ThreatIntelChat initialQuery={chatQuery} onQueryHandled={() => setChatQuery("")} />
+                  <ThreatIntelChat 
+                    initialQuery={chatQuery} 
+                    onQueryHandled={() => setChatQuery("")} 
+                    onNavigate={(view) => setActiveView(view)}
+                  />
                 </div>
 
                 {/* RIGHT COLUMN: Terminal Shell & APM Trace Pipeline vertically stacked */}
                 <div className="h-full overflow-hidden flex flex-col gap-6">
                   {/* Top Stack: Monospace Developer Terminal */}
                   <div className="flex-1 min-h-[50%] overflow-hidden">
-                    <AuditTerminal simulatedLogs={simulatedTerminalLogs} />
+                    <AuditTerminal 
+                      simulatedLogs={simulatedTerminalLogs} 
+                      logs={dbLogs} 
+                      error={backendOnline === false ? "DAEMON OFFLINE" : null}
+                    />
                   </div>
                   
                   {/* Bottom Stack: Chain-of-Thought APM Trace */}

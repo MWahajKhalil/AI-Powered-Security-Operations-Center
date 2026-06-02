@@ -1,6 +1,6 @@
 # Phase 2: Backend Foundation
 
-This document details the configuration, schema architecture, and execution details established during Phase 2 of our custom AI-Powered Security Operations Center (SOC) project.
+This document details the configuration, schema architecture, and execution details established during Phase 2 of our Apex Guard (SOC) project.
 
 ---
 

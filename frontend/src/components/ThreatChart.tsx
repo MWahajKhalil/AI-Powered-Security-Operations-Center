@@ -2,12 +2,22 @@
 
 import React, { useState } from "react";
 
-interface ThreatChartProps {
-  riskScore?: number;
+interface ToolExecutionLog {
+  timestamp: string;
+  tool_name: string;
+  arguments: Record<string, any>;
+  result: any;
+  execution_time_ms: number;
+  status: "success" | "failure";
 }
 
-export default function ThreatChart({ riskScore }: ThreatChartProps) {
-  // Static timeline data representing last 7 days in the SOC Center
+interface ThreatChartProps {
+  riskScore?: number;
+  logs?: ToolExecutionLog[];
+}
+
+export default function ThreatChart({ riskScore, logs = [] }: ThreatChartProps) {
+  // Static baseline timeline data representing Typical last 7 days metrics
   const staticData = [
     { day: "Mon", scans: 140, blocked: 12, risk: 35 },
     { day: "Tue", scans: 185, blocked: 22, risk: 48 },
@@ -18,10 +28,63 @@ export default function ThreatChart({ riskScore }: ThreatChartProps) {
     { day: "Sun", scans: 165, blocked: 14, risk: 30 }
   ];
 
-  const data = [...staticData];
-  if (riskScore !== undefined) {
-    data[data.length - 1] = { ...data[data.length - 1], risk: riskScore };
-  }
+  // Aggregate real-time database logs by weekday
+  const aggregated = React.useMemo(() => {
+    const daysMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const counts: Record<string, { scans: number; blocked: number }> = {
+      Mon: { scans: 0, blocked: 0 },
+      Tue: { scans: 0, blocked: 0 },
+      Wed: { scans: 0, blocked: 0 },
+      Thu: { scans: 0, blocked: 0 },
+      Fri: { scans: 0, blocked: 0 },
+      Sat: { scans: 0, blocked: 0 },
+      Sun: { scans: 0, blocked: 0 }
+    };
+
+    logs.forEach(log => {
+      try {
+        const date = new Date(log.timestamp);
+        const dayName = daysMap[date.getDay()];
+        if (counts[dayName]) {
+          counts[dayName].scans += 1;
+          if (log.status === "failure") {
+            counts[dayName].blocked += 1;
+          }
+        }
+      } catch (_) {}
+    });
+
+    return counts;
+  }, [logs]);
+
+  // Combine static baseline data and live database aggregated logs
+  const data = React.useMemo(() => {
+    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const currentDayIndex = new Date().getDay();
+    const currentDayName = daysOfWeek[currentDayIndex];
+
+    return staticData.map(d => {
+      const live = aggregated[d.day] || { scans: 0, blocked: 0 };
+      let dynamicRisk = d.risk;
+
+      if (live.scans > 0) {
+        const failRatio = live.blocked / live.scans;
+        dynamicRisk = Math.min(100, Math.round(d.risk + failRatio * 35 + live.scans * 0.8));
+      }
+
+      // Override current day's risk score if simulation is active
+      if (riskScore !== undefined && riskScore !== 16.5 && d.day === currentDayName) {
+        dynamicRisk = riskScore;
+      }
+
+      return {
+        day: d.day,
+        scans: d.scans + live.scans,
+        blocked: d.blocked + live.blocked,
+        risk: dynamicRisk
+      };
+    });
+  }, [aggregated, riskScore]);
 
   // Interactive UI States
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -33,8 +96,11 @@ export default function ThreatChart({ riskScore }: ThreatChartProps) {
   const height = 180;
   const padding = 30;
 
-  // Chart limits configuration
-  const maxScans = 350;
+  // Dynamically compute max scans to auto-scale chart grid and prevent overflow
+  const maxScans = React.useMemo(() => {
+    const maxVal = Math.max(...data.map(d => d.scans), 300);
+    return Math.ceil(maxVal / 50) * 50; // round up to nearest 50
+  }, [data]);
 
   // Projections onto SVG Grid
   const getX = (index: number): number => {

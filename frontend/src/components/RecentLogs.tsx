@@ -13,47 +13,22 @@ interface ToolExecutionLog {
 
 interface RecentLogsProps {
   simulatedLogs?: ToolExecutionLog[];
+  logs?: ToolExecutionLog[];
+  loading?: boolean;
+  error?: string | null;
 }
 
-export default function RecentLogs({ simulatedLogs = [] }: RecentLogsProps) {
-  const [logs, setLogs] = useState<ToolExecutionLog[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+export default function RecentLogs({ 
+  simulatedLogs = [],
+  logs = [],
+  loading = false,
+  error = null
+}: RecentLogsProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "success" | "failure">("all");
   
   // Track which log row is currently expanded (Datadog accordions)
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-
-  const fetchLogs = async () => {
-    try {
-      const response = await fetch("http://localhost:8000/api/logs?limit=30", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (response.ok) {
-        const payload = await response.json();
-        if (payload.success && Array.isArray(payload.data)) {
-          setLogs(payload.data);
-          setError(null);
-        } else {
-          setError("Malformed data package");
-        }
-      } else {
-        setError("Failed to query log database");
-      }
-    } catch (err) {
-      setError("Database Offline");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 3500);
-    return () => clearInterval(interval);
-  }, []);
 
   const displayLogs = [...simulatedLogs, ...logs];
 

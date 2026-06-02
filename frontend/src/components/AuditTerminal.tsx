@@ -13,47 +13,19 @@ interface ToolExecutionLog {
 
 interface AuditTerminalProps {
   simulatedLogs?: ToolExecutionLog[];
+  logs?: ToolExecutionLog[];
+  error?: string | null;
 }
 
-export default function AuditTerminal({ simulatedLogs = [] }: AuditTerminalProps) {
-  const [logs, setLogs] = useState<ToolExecutionLog[]>([]);
-  const [error, setError] = useState<string | null>(null);
+export default function AuditTerminal({ simulatedLogs = [], logs = [], error = null }: AuditTerminalProps) {
   const terminalEndRef = useRef<HTMLDivElement | null>(null);
-
-  const fetchLogs = async () => {
-    try {
-      const response = await fetch("http://localhost:8000/api/logs?limit=30", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (response.ok) {
-        const payload = await response.json();
-        if (payload.success && Array.isArray(payload.data)) {
-          // Sort chronologically (oldest to newest) to display like a terminal stream
-          const sortedLogs = [...payload.data].reverse();
-          setLogs(sortedLogs);
-          setError(null);
-        }
-      } else {
-        setError("SENSOR DISCONNECTED");
-      }
-    } catch (err) {
-      setError("DAEMON OFFLINE");
-    }
-  };
-
-  useEffect(() => {
-    fetchLogs();
-    const interval = setInterval(fetchLogs, 2500);
-    return () => clearInterval(interval);
-  }, []);
 
   // Auto scroll to the bottom of the terminal on new logs
   useEffect(() => {
     if (terminalEndRef.current) {
       terminalEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [logs]);
+  }, [logs, simulatedLogs]);
 
   return (
     <div className="h-full w-full bg-[#0A0E17] border border-[var(--border-muted)] rounded-lg flex flex-col font-mono shadow-xl overflow-hidden transition-all duration-300">
@@ -86,7 +58,8 @@ export default function AuditTerminal({ simulatedLogs = [] }: AuditTerminalProps
 
         {/* Dynamic logs streams */}
         {(() => {
-          const displayLogs = [...logs, ...simulatedLogs];
+          const sortedLogs = [...logs].reverse();
+          const displayLogs = [...sortedLogs, ...simulatedLogs];
           return displayLogs.length === 0 ? (
             <div className="text-[var(--text-muted)]/40 text-[10px]">
               {error ? (

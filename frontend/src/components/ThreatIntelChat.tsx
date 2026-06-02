@@ -20,9 +20,10 @@ interface Message {
 interface ThreatIntelChatProps {
   initialQuery?: string;
   onQueryHandled?: () => void;
+  onNavigate?: (view: "launchpad" | "radar" | "audits" | "sandbox" | "chat") => void;
 }
 
-export default function ThreatIntelChat({ initialQuery, onQueryHandled }: ThreatIntelChatProps = {}) {
+export default function ThreatIntelChat({ initialQuery, onQueryHandled, onNavigate }: ThreatIntelChatProps = {}) {
   const [messages, setMessages] = useState<Message[]>([
     {
       sender: "agent",
@@ -353,6 +354,20 @@ export default function ThreatIntelChat({ initialQuery, onQueryHandled }: Threat
                         </div>
                       );
                     })}
+                  </div>
+                )}
+
+                {/* Dynamic Map Pivot Shortcut Button */}
+                {isAgent && msg.toolsExecuted && msg.toolsExecuted.some(t => t.tool_name === "geoip_lookup" || t.tool_name === "detect_privilege_escalation" || t.tool_name === "summarize_malicious_activities") && onNavigate && (
+                  <div className="mt-2.5 flex px-1">
+                    <button
+                      type="button"
+                      onClick={() => onNavigate("radar")}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#0EA5E9]/20 bg-[#0EA5E9]/5 text-[#0EA5E9] hover:bg-[#0EA5E9]/15 hover:border-[#0EA5E9]/45 text-[9px] font-bold uppercase tracking-wider cursor-pointer transition-all duration-200 hover:shadow-[0_0_8px_rgba(14,165,233,0.2)]"
+                    >
+                      <span>🗺️</span>
+                      <span>Pivot to Threat Ingress Radar Map</span>
+                    </button>
                   </div>
                 )}
               </div>

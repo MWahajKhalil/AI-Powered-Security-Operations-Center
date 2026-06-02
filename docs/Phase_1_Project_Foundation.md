@@ -1,6 +1,6 @@
 # Phase 1: Project Foundation & Folder Structure
 
-This document records the design decisions, architecture patterns, and directory structures established during Phase 1 of our custom AI-Powered Security Operations Center (SOC) project.
+This document records the design decisions, architecture patterns, and directory structures established during Phase 1 of our Apex Guard (SOC) project.
 
 ---
 

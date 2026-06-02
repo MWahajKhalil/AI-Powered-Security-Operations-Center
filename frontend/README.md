@@ -1,4 +1,4 @@
-# AI-Powered SOC Dashboard - Frontend
+# Apex Guard - Frontend
 
 This is the user interface for our Security Operations Center (SOC) Dashboard, built using **Next.js**, **TypeScript**, and **Vanilla CSS Modules** for premium glassmorphic visual aesthetics.
 

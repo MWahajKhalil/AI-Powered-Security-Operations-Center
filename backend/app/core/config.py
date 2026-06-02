@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "AI-Powered Security Operations Center"
+    PROJECT_NAME: str = "Apex Guard"
     VERSION: str = "1.0.0"
     API_PREFIX: str = "/api"
     DEBUG: bool = True

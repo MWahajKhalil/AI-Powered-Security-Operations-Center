@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AI-Powered SOC Dashboard",
-  description: "Enterprise Security Operations Center Dashboard powered by Model Context Protocol (MCP) and AI reasoning.",
+  title: "Apex Guard Dashboard",
+  description: "Apex Guard — Security Operations Center Dashboard powered by Model Context Protocol (MCP) and AI reasoning.",
 };
 
 export default function RootLayout({

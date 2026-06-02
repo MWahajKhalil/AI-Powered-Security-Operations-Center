@@ -1,6 +1,6 @@
-# AI-Powered Security Operations Center (SOC) with Model Context Protocol (MCP)
+# Apex Guard (SOC) with Model Context Protocol (MCP)
 
-This project is a step-by-step modular build of an AI-Powered Security Operations Center (SOC) Dashboard. It demonstrates the integration of an AI agent with multiple Model Context Protocol (MCP) servers to perform security operations, threat intelligence investigation, log analysis, and incident reporting.
+This project is a step-by-step modular build of Apex Guard — an AI-powered Security Operations Center (SOC) Dashboard. It demonstrates the integration of an AI agent with multiple Model Context Protocol (MCP) servers to perform security operations, threat intelligence investigation, log analysis, and incident reporting.
 
 ## Project Structure
 
@@ -10,4 +10,4 @@ This project is a step-by-step modular build of an AI-Powered Security Operation
 * `/agent_layer`: The intelligent agent and multi-agent coordination logic.
 * `/database`: Storage for local logs, history, and system configurations.
 * `/docs`: Project manuals, guides, and learning journals.
-# AI-Powered-Security-Operations-Center
+# Apex-Guard
